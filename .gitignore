@@ -1,0 +1,12 @@
+# Archivos de sistema
+__pycache__/
+*.pyc
+
+# Carpeta de entorno virtual (si estás usando uno)
+venv/
+
+# Archivo de configuración de PyCharm
+.idea/
+
+# Archivo de registro de errores
+*.log

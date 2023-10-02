@@ -1,0 +1,15 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development  # Configura el entorno de Flask como desarrollo
+    depends_on:
+      - db  # Dependencia opcional, si tienes una base de datos en otro contenedor
+
+  db:
+    image: postgres:latest  # Cambia esto según tu configuración de base de datos PostgreSQL
+    environment:
+      POSTGRES_PASSWORD: yourpassword  # Configura la contraseña de la base de datos
