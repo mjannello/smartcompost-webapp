@@ -1,4 +1,6 @@
-from app import app
+from app.app import app
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", port=8080)
+
+# http://0.0.0.0:8080/api/compost_bins/compost_bins

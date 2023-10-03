@@ -1,4 +1,5 @@
-from app import db  # Importa la instancia de la base de datos
+# from app import db  # Importa la instancia de la base de datos
+from app.app import db
 
 
 class CompostBin(db.Model):

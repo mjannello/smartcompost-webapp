@@ -3,11 +3,12 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
-    environment:
-      - FLASK_ENV=development  # Configura el entorno de Flask como desarrollo
+      - "8080:8080"
     depends_on:
-      - db  # Dependencia opcional, si tienes una base de datos en otro contenedor
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:contraseña@postgres:5432/nombre_de_la_base_de_datos
+
 
   db:
     image: postgres:latest  # Cambia esto según tu configuración de base de datos PostgreSQL

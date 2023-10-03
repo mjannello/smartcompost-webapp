@@ -1,20 +1,12 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 
-from app.config import DevelopmentConfig
+# Crear la instancia de la aplicación Flask
+from app.app import app  # Importa la instancia de la aplicación Flask desde app.py
 
-app = Flask(__name__)
+# Importa los blueprints
+from app.views.compost_bins import compost_bins_bp
+from app.views.measurements import measurements_bp
 
-# Configuración de la base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://usuario:contraseña@localhost/nombre_base_de_datos'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Inicialización de la instancia de la base de datos
-db = SQLAlchemy(app)
-
-# Configura la aplicación Flask con la configuración apropiada
-app.config.from_object(DevelopmentConfig)
-
-
-if __name__ == '__main__':
-    app.run()
+# Suscribir los blueprints a la aplicación
+app.register_blueprint(compost_bins_bp, url_prefix='/api/compost_bins')
+app.register_blueprint(measurements_bp, url_prefix='/api/measurements')
