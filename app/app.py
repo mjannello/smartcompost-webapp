@@ -1,3 +1,4 @@
+import logging
 import os
 from flask import Flask
 from flask_cors import CORS
@@ -17,3 +18,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 
 # Resto de la configuración
 db = SQLAlchemy(app)
+
+# Configuracion del logger
+app.logger.setLevel(logging.INFO)  # Configura el nivel de registro
+formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] - %(message)s')
+
+# Configura el destino de registro en un archivo
+file_handler = logging.FileHandler('app.log')
+file_handler.setFormatter(formatter)
+app.logger.addHandler(file_handler)
+
+# Configura el destino de registro en la consola
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+app.logger.addHandler(console_handler)

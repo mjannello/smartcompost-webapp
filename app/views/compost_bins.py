@@ -1,5 +1,8 @@
-from flask import Blueprint, jsonify
-from app.models import CompostBin
+from flask import Blueprint, jsonify, request
+
+from app.models import CompostBin, Measurement
+from app import app
+from app.serializers import MeasurementSchema
 
 compost_bins_bp = Blueprint('compost_bins', __name__)
 
@@ -10,20 +13,34 @@ def health_check():
     return jsonify({'status': 'API is healthy'})
 
 
-@compost_bins_bp.route('/', methods=['GET'])
-def get_compost_bins():
-    compost_bins = CompostBin.query.all()
-    compost_bin_data = [{'id': bin.id, 'name': bin.name} for bin in compost_bins]
-    return jsonify(compost_bin_data)
+@compost_bins_bp.route('/<int:compost_bin_id>/last_measurement')
+def get_last_measurement(compost_bin_id):
+    app.logger.info(f'Getting last measurement from compost bin {compost_bin_id}')
 
-
-@compost_bins_bp.route('/<int:compost_bin_id>', methods=['GET'])
-def get_compost_bin(compost_bin_id):
     compost_bin = CompostBin.query.get_or_404(compost_bin_id)
-    compost_bin_data = {
-        'id': compost_bin.id,
-        'name': compost_bin.name,
-        'description': compost_bin.description,
-        # Otros atributos de la compostera que desees mostrar
-    }
-    return jsonify(compost_bin_data)
+    last_measurement = Measurement.query.filter_by(compost_bin_id=compost_bin.id).order_by(Measurement.timestamp.desc()).first()
+    if last_measurement is None:
+        return jsonify({'message': 'No measurements found for this compost bin'}), 404
+
+    # Crear una instancia del esquema MeasurementSchema y serializar el resultado
+    measurement_schema = MeasurementSchema()
+    measurement_data = measurement_schema.dump(last_measurement)
+
+    return jsonify({'last_measurement': measurement_data}), 200
+
+
+@compost_bins_bp.route('/<int:compost_bin_id>/measurements')
+def get_measurements_by_period(compost_bin_id):
+    # Parsear los parámetros del período (year, month, etc.) desde la solicitud
+    year = request.args.get('year')
+    month = request.args.get('month')
+    # Filtrar las mediciones por período y compostera
+    measurements = Measurement.query.filter_by(compost_bin_id=compost_bin_id, year=year, month=month).all()
+    # Serializar y devolver measurements
+
+
+@compost_bins_bp.route('/<int:compost_bin_id>/measurements/<string:sensor_type>')
+def get_measurements_by_sensor(compost_bin_id, sensor_type):
+    # Filtrar las mediciones por sensor y compostera
+    measurements = Measurement.query.filter_by(compost_bin_id=compost_bin_id, sensor_type=sensor_type).all()
+    # Serializar y devolver measurements

@@ -1,16 +1,20 @@
 version: '3'
 services:
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8080:8080"  # Mapea el puerto del contenedor al puerto local
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgresql://postgres:contraseña@postgres:5432/nombre_de_la_base_de_datos
-
-
+      DATABASE_URL: postgresql://mjannello:mypassword@db:5432/smartcompost_db
   db:
-    image: postgres:latest  # Cambia esto según tu configuración de base de datos PostgreSQL
+    image: postgres:latest
     environment:
-      POSTGRES_PASSWORD: yourpassword  # Configura la contraseña de la base de datos
+      POSTGRES_USER: mjannello
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: smartcompost_db
+    ports:
+      - "5432:5432"

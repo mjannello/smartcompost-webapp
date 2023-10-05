@@ -1,5 +1,6 @@
 flask~=3.0.0
 Flask-SQLAlchemy
-psycopg2-binary==2.9.8
 SQLAlchemy
 flask_cors
+psycopg2-binary==2.9.8
+marshmallow
