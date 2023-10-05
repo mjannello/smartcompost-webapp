@@ -32,11 +32,18 @@ def get_last_measurement(compost_bin_id):
 @compost_bins_bp.route('/<int:compost_bin_id>/measurements')
 def get_measurements_by_period(compost_bin_id):
     # Parsear los parámetros del período (year, month, etc.) desde la solicitud
-    year = request.args.get('year')
-    month = request.args.get('month')
-    # Filtrar las mediciones por período y compostera
-    measurements = Measurement.query.filter_by(compost_bin_id=compost_bin_id, year=year, month=month).all()
-    # Serializar y devolver measurements
+    # year = request.args.get('year')
+    # month = request.args.get('month')
+    compost_bin = CompostBin.query.get_or_404(compost_bin_id)
+
+    # Obtén todas las mediciones asociadas al compost bin
+    measurements = compost_bin.measurements
+
+    # Serializa las mediciones utilizando el esquema
+    measurement_schema = MeasurementSchema(many=True)
+    measurements_data = measurement_schema.dump(measurements)
+
+    return jsonify(measurements_data), 200
 
 
 @compost_bins_bp.route('/<int:compost_bin_id>/measurements/<string:sensor_type>')
