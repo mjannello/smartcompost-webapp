@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from app.app import app  # Importa la instancia de la aplicación Flask desde app.app
-from app.app import db
-from app.models import CompostBin, Measurement
+from app_pkg.application import app  # Importa la instancia de la aplicación Flask desde app_pkg.app_pkg
+from app_pkg.application import db
+from app_pkg.models import CompostBin, Measurement
 
 if __name__ == '__main__':
     with app.app_context():

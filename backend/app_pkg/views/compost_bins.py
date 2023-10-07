@@ -1,8 +1,10 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 
-from app.models import CompostBin, Measurement
-from app import app
-from app.serializers import MeasurementSchema
+# from models import CompostBin, Measurement
+
+from ..application import app
+from ..models import CompostBin, Measurement
+from ..serializers import MeasurementSchema
 
 compost_bins_bp = Blueprint('compost_bins', __name__)
 
@@ -18,7 +20,7 @@ def get_last_measurement(compost_bin_id):
     app.logger.info(f'Getting last measurement from compost bin {compost_bin_id}')
 
     compost_bin = CompostBin.query.get_or_404(compost_bin_id)
-    last_measurement = Measurement.query.filter_by(compost_bin_id=compost_bin.id).order_by(Measurement.timestamp.desc()).first()
+    last_measurement = Measurement.query.filter_by(compost_bin_id=compost_bin.compost_bin_id).order_by(Measurement.timestamp.desc()).first()
     if last_measurement is None:
         return jsonify({'message': 'No measurements found for this compost bin'}), 404
 

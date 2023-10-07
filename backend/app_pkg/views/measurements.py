@@ -1,7 +1,7 @@
-# smartcompost/app/views/measurements.py
+# smartcompost/app_pkg/views/measurements.py
 
-from flask import Blueprint, request, jsonify
-from app.models import Measurement
+from flask import Blueprint, jsonify
+from ..models import Measurement
 
 measurements_bp = Blueprint("measurements", __name__, url_prefix="/api/measurements")
 

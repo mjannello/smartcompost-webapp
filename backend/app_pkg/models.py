@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.app import db
+from .application import db
 
 
 class CompostBin(db.Model):

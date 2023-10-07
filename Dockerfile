@@ -1,11 +1,11 @@
 # Utiliza una imagen base de Python
 FROM python:3.8-slim
 
-# Establece el directorio de trabajo en /app
+# Establece el directorio de trabajo en /app_pkg
 WORKDIR /app
 
 # Copia el archivo de requerimientos al contenedor
-COPY requirements.txt .
+COPY backend/requirements.txt .
 
 # Instala las dependencias del proyecto
 RUN pip install -r requirements.txt
@@ -17,6 +17,6 @@ COPY . .
 EXPOSE 5000
 
 # Comando para ejecutar la aplicación Flask
-CMD ["python", "init_app.py"]
+CMD ["python", "backend/init_app.py"]
 
 
