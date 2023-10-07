@@ -2,7 +2,7 @@ version: '3'
 services:
   web:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"  # Mapea el puerto del contenedor al puerto local
