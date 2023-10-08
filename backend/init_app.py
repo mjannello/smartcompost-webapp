@@ -1,6 +1,7 @@
+import random
 from datetime import datetime
 
-from app_pkg.application import app  # Importa la instancia de la aplicación Flask desde app_pkg.app_pkg
+from app_pkg.application import app
 from app_pkg.application import db
 from app_pkg.models import CompostBin, Measurement
 
@@ -16,21 +17,37 @@ if __name__ == '__main__':
         compost_bin1 = CompostBin(name='Compost Bin 1')
         compost_bin2 = CompostBin(name='Compost Bin 2')
 
-        measurement1 = Measurement(
-            temperature=25.5,
-            humidity=60.0,
-            timestamp=datetime.utcnow(),
-            compost_bin=compost_bin1
-        )
-        measurement2 = Measurement(temperature=27.0, humidity=62.0, timestamp=datetime.utcnow(), compost_bin=compost_bin1)
-        measurement3 = Measurement(temperature=26.0, humidity=58.0, timestamp=datetime.utcnow(), compost_bin=compost_bin2)
+        # Agrega mediciones para compost_bin1
+        for _ in range(10):
+            temperature = round(random.uniform(5, 50), 2)
+            humidity = round(random.uniform(60, 100), 2)
+            timestamp = datetime.utcnow()
 
-        # Agrega los objetos a la sesión y guarda en la base de datos
+            measurement = Measurement(
+                temperature=temperature,
+                humidity=humidity,
+                timestamp=timestamp,
+                compost_bin=compost_bin1
+            )
+            db.session.add(measurement)
+
+        # Agrega mediciones para compost_bin2
+        for _ in range(10):
+            temperature = round(random.uniform(5, 50), 2)
+            humidity = round(random.uniform(60, 100), 2)
+            timestamp = datetime.utcnow()
+
+            measurement = Measurement(
+                temperature=temperature,
+                humidity=humidity,
+                timestamp=timestamp,
+                compost_bin=compost_bin2
+            )
+            db.session.add(measurement)
+
+        # Guarda los objetos en la base de datos
         db.session.add(compost_bin1)
         db.session.add(compost_bin2)
-        db.session.add(measurement1)
-        db.session.add(measurement2)
-        db.session.add(measurement3)
 
         db.session.commit()
 
