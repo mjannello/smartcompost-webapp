@@ -8,6 +8,7 @@ services:
       - "8080:8080"  # Mapea el puerto del contenedor al puerto local
     depends_on:
       - db
+    command: [ "wait-for-it.sh", "db:5432", "--", "python", "init_app.py" ]
     environment:
       DATABASE_URL: postgresql://mjannello:mypassword@db:5432/smartcompost_db
   db:
