@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
+import CompostBinSelector from "../components/Customized/CompostBinSelector";
 
 const defaultData = {
   labels: [],
   datasets: [
     {
-      borderColor: "#6bd098",
+      label: "Humedad",
+      borderColor: "#6bd098", // Color para la humedad
       backgroundColor: "#6bd098",
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      borderWidth: 3,
+      tension: 0.4,
+      fill: false,
+      data: [],
+    },
+    {
+      label: "Temperatura",
+      borderColor: "#f17e5d", // Color para la temperatura
+      backgroundColor: "#f17e5d",
       pointRadius: 0,
       pointHoverRadius: 0,
       borderWidth: 3,
@@ -19,61 +32,112 @@ const defaultData = {
 
 const LineChart = () => {
   const [chartData, setChartData] = useState(defaultData);
+  const [selectedCompostBinId, setSelectedCompostBinId] = useState("");
 
-  // Función para actualizar solo las partes necesarias del estado
   const updateChartData = (newLabels, newHumidityData, newTemperatureData) => {
     setChartData((prevChartData) => ({
       ...prevChartData,
       labels: newLabels,
       datasets: [
         {
-          ...prevChartData.datasets[0],
+          ...prevChartData.datasets[0], // Actualiza el conjunto de datos de humedad
           data: newHumidityData,
-          label: "Humedad",
         },
         {
-          ...prevChartData.datasets[0],
+          ...prevChartData.datasets[1], // Actualiza el conjunto de datos de temperatura
           data: newTemperatureData,
-          label: "Temperatura",
         },
       ],
     }));
   };
 
-  // Función para realizar la solicitud a la API y actualizar los datos
-  const fetchDataFromApi = async () => {
-    try {
-      const response = await fetch("http://0.0.0.0:8080/api/compost_bins/1/measurements");
-      if (!response.ok) {
-        throw new Error("Error al obtener datos de la API");
+  const handleCompostBinChange = async (event) => {
+      const selectedId = event;
+      setSelectedCompostBinId(selectedId);
+
+      // Realiza un nuevo GET para obtener datos de la compostera seleccionada
+      const apiUrl = `http://0.0.0.0:8080/api/compost_bins/${selectedId}/measurements`;
+
+      try {
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error("Error al obtener datos de la API");
+        }
+
+        const data = await response.json();
+
+        const humidityData = data.filter((item) => item.humidity !== null);
+        const temperatureData = data.filter((item) => item.temperature !== null);
+
+        const labels = humidityData.map((item) => item.timestamp);
+        const humidityValues = humidityData.map((item) => item.humidity);
+        const temperatureValues = temperatureData.map((item) => item.temperature);
+
+        updateChartData(labels, humidityValues, temperatureValues);
+      } catch (error) {
+        console.error("Error:", error);
       }
-
-      const data = await response.json();
-
-      // Filtrar las mediciones de humedad y temperatura
-      const humidityData = data.filter((item) => item.humidity !== null);
-      const temperatureData = data.filter((item) => item.temperature !== null);
-
-      // Obtener las etiquetas (timestamp) y valores de humedad y temperatura
-      const labels = humidityData.map((item) => item.timestamp);
-      const humidityValues = humidityData.map((item) => item.humidity);
-      const temperatureValues = temperatureData.map((item) => item.temperature);
-
-      // Actualizar el estado con los datos filtrados
-      updateChartData(labels, humidityValues, temperatureValues);
-    } catch (error) {
-      console.error("Error:", error);
-    }
   };
 
   useEffect(() => {
-    // Simula la actualización de datos desde la API cada 1 segundos
-    const intervalId = setInterval(fetchDataFromApi, 1000);
+    // Obtén la ID de la primera compostera y establece el estado inicial
+    const fetchFirstCompostBinId = async () => {
+      try {
+        const response = await fetch("http://0.0.0.0:8080/api/compost_bins/all_ids");
+        if (!response.ok) {
+          throw new Error("Error al obtener los IDs de las composteras");
+        }
 
-    return () => clearInterval(intervalId);
-  }, []);
+        const data = await response.json();
 
-  return <Line data={chartData} width={400} height={100} />;
+        // Establece la primera ID como seleccionada por defecto
+        if (data.length > 0) {
+          setSelectedCompostBinId(data[0]);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
+    fetchFirstCompostBinId();
+  }, []); // Este useEffect se ejecutará solo una vez al montar el componente
+
+  useEffect(() => {
+    if (selectedCompostBinId) {
+      const fetchDataFromApi = async () => {
+        const apiUrl = `http://0.0.0.0:8080/api/compost_bins/${selectedCompostBinId}/measurements`;
+        try {
+          const response = await fetch(apiUrl);
+          if (!response.ok) {
+            throw new Error("Error al obtener datos de la API");
+          }
+
+          const data = await response.json();
+
+          const humidityData = data.filter((item) => item.humidity !== null);
+          const temperatureData = data.filter((item) => item.temperature !== null);
+
+          const labels = humidityData.map((item) => item.timestamp);
+          const humidityValues = humidityData.map((item) => item.humidity);
+          const temperatureValues = temperatureData.map((item) => item.temperature);
+
+          updateChartData(labels, humidityValues, temperatureValues);
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      };
+
+      fetchDataFromApi();
+    }
+  }, [selectedCompostBinId]);
+
+  return (
+    <div>
+      {/* Selector de composteras */}
+      <CompostBinSelector onCompostBinChange={handleCompostBinChange} />
+      <Line data={chartData} width={400} height={100} />
+    </div>
+  );
 };
 
 export default LineChart;
