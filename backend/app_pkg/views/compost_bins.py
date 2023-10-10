@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify
+from sqlalchemy import func
 
 # from models import CompostBin, Measurement
 
-from ..application import app
+from ..application import app, db
 from ..models import CompostBin, Measurement
 from ..serializers import MeasurementSchema
 
@@ -48,8 +49,59 @@ def get_measurements_by_period(compost_bin_id):
     return jsonify(measurements_data), 200
 
 
-@compost_bins_bp.route('/<int:compost_bin_id>/measurements/<string:sensor_type>')
-def get_measurements_by_sensor(compost_bin_id, sensor_type):
-    # Filtrar las mediciones por sensor y compostera
-    measurements = Measurement.query.filter_by(compost_bin_id=compost_bin_id, sensor_type=sensor_type).all()
-    # Serializar y devolver measurements
+@compost_bins_bp.route('/', methods=['GET'])
+def get_all_compost_bins():
+    try:
+        # Consulta la base de datos para obtener todos los compost bins
+        compost_bins = CompostBin.query.all()
+        app.logger.info(compost_bins)
+        # Crea una lista para almacenar los datos de cada compost bin con su última medición
+        compost_bins_data = []
+
+        # Itera a través de los compost bins y obtén su última medición
+        for compost_bin in compost_bins:
+            last_measurement = Measurement.query.filter_by(compost_bin_id=compost_bin.compost_bin_id).order_by(
+                Measurement.timestamp.desc()).first()
+            compost_bin_data = {
+                'id': compost_bin.compost_bin_id,
+                'name': compost_bin.name,
+                'last_measurement': {
+                    'temperature': last_measurement.temperature,
+                    'humidity': last_measurement.humidity,
+                    'timestamp': last_measurement.timestamp.isoformat()
+                }
+            }
+            compost_bins_data.append(compost_bin_data)
+
+        # Devuelve los datos en formato JSON
+        return jsonify(compost_bins_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+#
+# @compost_bins_bp.route('/', methods=['GET'])
+# def get_last_measurements():
+#     # Consulta para obtener las últimas mediciones de cada compost bin
+#     last_measurements = db.session.query(CompostBin, func.max(Measurement.timestamp).label('last_timestamp')).\
+#         join(Measurement, Measurement.compost_bin_id == CompostBin.compost_bin_id).\
+#         group_by(CompostBin.compost_bin_id).all()
+#
+#     # Lista para almacenar las últimas mediciones de cada compost bin
+#     last_measurements_data = []
+#
+#     for compost_bin, last_timestamp in last_measurements:
+#         last_measurement = Measurement.query.filter_by(compost_bin_id=compost_bin.compost_bin_id, timestamp=last_timestamp).first()
+#         if last_measurement is not None:
+#             last_measurement_data = {
+#                 'compost_bin_id': compost_bin.compost_bin_id,
+#                 'temperature': last_measurement.temperature,
+#                 'humidity': last_measurement.humidity,
+#                 'timestamp': last_measurement.timestamp,
+#             }
+#             last_measurements_data.append(last_measurement_data)
+#
+#     # Serializa los datos
+#     measurement_schema = MeasurementSchema(many=True)
+#     measurements_data = measurement_schema.dump(last_measurements_data)
+#
+#     return jsonify(measurements_data), 200

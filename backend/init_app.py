@@ -13,9 +13,13 @@ if __name__ == '__main__':
         # Aplica migraciones
         db.session.commit()  # Asegúrate de que las migraciones se apliquen antes de agregar datos
 
-        # Agrega datos mockeados
+        # Crea dos composteras
         compost_bin1 = CompostBin(name='Compost Bin 1')
         compost_bin2 = CompostBin(name='Compost Bin 2')
+
+        db.session.add(compost_bin1)
+        db.session.add(compost_bin2)
+        db.session.commit()
 
         # Agrega mediciones para compost_bin1
         for _ in range(10):
@@ -44,10 +48,6 @@ if __name__ == '__main__':
                 compost_bin=compost_bin2
             )
             db.session.add(measurement)
-
-        # Guarda los objetos en la base de datos
-        db.session.add(compost_bin1)
-        db.session.add(compost_bin2)
 
         db.session.commit()
 
