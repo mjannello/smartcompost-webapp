@@ -1,5 +1,5 @@
-from flask import Blueprint, jsonify
-from sqlalchemy import func
+from flask import Blueprint, request, jsonify
+# from sqlalchemy import func
 
 # from models import CompostBin, Measurement
 
@@ -93,6 +93,34 @@ def get_all_compost_bin_ids():
 
         # Devuelve los IDs en formato JSON
         return jsonify(compost_bin_ids)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@compost_bins_bp.route('/add_measurement', methods=['POST'])
+def add_measurement():
+    try:
+        data = request.get_json()
+
+        if 'id' not in data or 'temperatura' not in data or 'humedad' not in data or 'datetime' not in data:
+            return jsonify({'error': 'Los campos id, temperatura, humedad y datetime son obligatorios'}), 400
+
+        compost_bin = CompostBin.query.get(data['id'])
+        if compost_bin is None:
+            return jsonify({'error': 'No se encontró una compostera con el ID proporcionado'}), 404
+
+        new_measurement = Measurement(
+            temperature=data['temperatura'],
+            humidity=data['humedad'],
+            timestamp=data['datetime'],
+            compost_bin=compost_bin
+        )
+
+        db.session.add(new_measurement)
+        db.session.commit()
+
+        return jsonify({'message': 'Medición agregada correctamente'}), 201
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
