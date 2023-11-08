@@ -52,11 +52,15 @@ const LineChart = () => {
   };
 
   const handleCompostBinChange = async (event) => {
-      const selectedId = event;
-      setSelectedCompostBinId(selectedId);
+    const selectedId = event;
+    setSelectedCompostBinId(selectedId);
 
-      // Realiza un nuevo GET para obtener datos de la compostera seleccionada
-      const apiUrl = `http://0.0.0.0:8080/api/compost_bins/${selectedId}/measurements`;
+    fetchDataFromApi(); // Realiza un primer llamado al cambiar de compostera
+  };
+
+  const fetchDataFromApi = async () => {
+    if (selectedCompostBinId) {
+      const apiUrl = `http://0.0.0.0:8080/api/compost_bins/${selectedCompostBinId}/measurements`;
 
       try {
         const response = await fetch(apiUrl);
@@ -77,6 +81,7 @@ const LineChart = () => {
       } catch (error) {
         console.error("Error:", error);
       }
+    }
   };
 
   useEffect(() => {
@@ -103,32 +108,10 @@ const LineChart = () => {
   }, []); // Este useEffect se ejecutará solo una vez al montar el componente
 
   useEffect(() => {
-    if (selectedCompostBinId) {
-      const fetchDataFromApi = async () => {
-        const apiUrl = `http://0.0.0.0:8080/api/compost_bins/${selectedCompostBinId}/measurements`;
-        try {
-          const response = await fetch(apiUrl);
-          if (!response.ok) {
-            throw new Error("Error al obtener datos de la API");
-          }
+    // Actualiza los datos cada 1000 ms (1 segundo)
+    const intervalId = setInterval(fetchDataFromApi, 1000);
 
-          const data = await response.json();
-
-          const humidityData = data.filter((item) => item.humidity !== null);
-          const temperatureData = data.filter((item) => item.temperature !== null);
-
-          const labels = humidityData.map((item) => item.timestamp);
-          const humidityValues = humidityData.map((item) => item.humidity);
-          const temperatureValues = temperatureData.map((item) => item.temperature);
-
-          updateChartData(labels, humidityValues, temperatureValues);
-        } catch (error) {
-          console.error("Error:", error);
-        }
-      };
-
-      fetchDataFromApi();
-    }
+    return () => clearInterval(intervalId); // Limpia el intervalo al desmontar el componente
   }, [selectedCompostBinId]);
 
   return (
