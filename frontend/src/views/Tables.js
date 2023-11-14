@@ -5,7 +5,7 @@ function Tables() {
 
   useEffect(() => {
     // Realizar una solicitud GET al endpoint /compost_bins
-    fetch("http://0.0.0.0:8080/api/compost_bins")
+    fetch("http://vps-3744359-x.dattaweb.com:8080/api/compost_bins")
       .then((response) => response.json())
       .then((data) => {
         setCompostBins(data);

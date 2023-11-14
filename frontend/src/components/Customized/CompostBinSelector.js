@@ -7,7 +7,7 @@ const CompostBinSelector = ({ onCompostBinChange }) => {
   useEffect(() => {
     const fetchCompostBinIds = async () => {
       try {
-        const response = await fetch("http://0.0.0.0:8080/api/compost_bins/all_ids");
+        const response = await fetch("http://vps-3744359-x.dattaweb.com:8080/api/compost_bins/all_ids");
         if (!response.ok) {
           throw new Error("Error al obtener los IDs de las composteras");
         }
