@@ -60,7 +60,7 @@ const LineChart = () => {
 
   const fetchDataFromApi = async () => {
     if (selectedCompostBinId) {
-      const apiUrl = `http://0.0.0.0:8080/api/compost_bins/${selectedCompostBinId}/measurements`;
+      const apiUrl = `${process.env.REACT_APP_API_BASE_URL}/compost_bins/${selectedCompostBinId}/measurements`;
 
       try {
         const response = await fetch(apiUrl);
@@ -88,7 +88,7 @@ const LineChart = () => {
     // Obtén la ID de la primera compostera y establece el estado inicial
     const fetchFirstCompostBinId = async () => {
       try {
-        const response = await fetch("http://0.0.0.0:8080/api/compost_bins/all_ids");
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/compost_bins/all_ids`);
         if (!response.ok) {
           throw new Error("Error al obtener los IDs de las composteras");
         }

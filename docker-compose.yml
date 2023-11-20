@@ -23,5 +23,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile  # Usa el Dockerfile del frontend
+    environment:
+      REACT_APP_API_BASE_URL: http://0.0.0.0:8080/api
     ports:
       - "3000:3000"
