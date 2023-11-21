@@ -1,5 +1,15 @@
 version: '3'
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"  # Mapea el puerto del contenedor al puerto local
+    volumes:
+      - ./nginx/smartcompost.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
+      - web
+
   web:
     build:
       context: ./backend
