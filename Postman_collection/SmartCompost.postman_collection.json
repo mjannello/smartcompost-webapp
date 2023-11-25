@@ -1,0 +1,96 @@
+{
+	"info": {
+		"_postman_id": "e7fbaeb4-b444-4b3a-ba3e-b15ee780233d",
+		"name": "SmartCompost",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26301576"
+	},
+	"item": [
+		{
+			"name": "Get All Compost bins",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://0.0.0.0:8080/api/compost_bins/",
+					"protocol": "http",
+					"host": [
+						"0",
+						"0",
+						"0",
+						"0"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"compost_bins",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Measurements by Compost bin on period",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Get all compost bins IDs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://0.0.0.0:8080/api/compost_bins/all_ids",
+					"protocol": "http",
+					"host": [
+						"0",
+						"0",
+						"0",
+						"0"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"compost_bins",
+						"all_ids"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post measurement",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\": 1,\n    \"temperatura\": 25.5,\n    \"humedad\": 60.0,\n    \"datetime\": \"2023-11-08T14:30:00\"\n  }"
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/compost_bins/add_measurement",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"compost_bins",
+						"add_measurement"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
