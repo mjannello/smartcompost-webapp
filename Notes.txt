@@ -1,0 +1,4 @@
+DOS-UNIX line endings mismatches
+If you are running on Windows and it appears the error:
+/usr/bin/env: ‘bash\r’: No such file or directory
+run this: git ls-files -z | xargs -0 dos2unix
