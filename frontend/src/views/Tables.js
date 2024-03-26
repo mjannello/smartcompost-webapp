@@ -15,6 +15,11 @@ function Tables() {
       });
   }, []);
 
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString(); // Puedes personalizar este formato según tus preferencias
+  };
+
   return (
     <>
       <div className="content">
@@ -33,7 +38,7 @@ function Tables() {
                 <td>{compostBin.name}</td>
                 <td>{compostBin.last_measurement.temperature}</td>
                 <td>{compostBin.last_measurement.humidity}</td>
-                <td>{compostBin.last_measurement.timestamp}</td>
+                <td>{formatTimestamp(compostBin.last_measurement.timestamp)}</td>
               </tr>
             ))}
           </tbody>
