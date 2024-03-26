@@ -58,37 +58,42 @@ const LineChart = () => {
     fetchDataFromApi(); // Realiza un primer llamado al cambiar de compostera
   };
 
-  const fetchDataFromApi = async () => {
-    if (selectedCompostBinId) {
-      const apiUrl = `http://0.0.0.0:8080/api/compost_bins/${selectedCompostBinId}/measurements`;
+const fetchDataFromApi = async () => {
+  if (selectedCompostBinId) {
+    const apiUrl = `${process.env.REACT_APP_API_BASE_URL}/compost_bins/${selectedCompostBinId}/measurements`;
 
-      try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error("Error al obtener datos de la API");
-        }
-
-        const data = await response.json();
-
-        const humidityData = data.filter((item) => item.humidity !== null);
-        const temperatureData = data.filter((item) => item.temperature !== null);
-
-        const labels = humidityData.map((item) => item.timestamp);
-        const humidityValues = humidityData.map((item) => item.humidity);
-        const temperatureValues = temperatureData.map((item) => item.temperature);
-
-        updateChartData(labels, humidityValues, temperatureValues);
-      } catch (error) {
-        console.error("Error:", error);
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error("Error al obtener datos de la API");
       }
+
+      const data = await response.json();
+
+      const humidityData = data.filter((item) => item.humidity !== null);
+      const temperatureData = data.filter((item) => item.temperature !== null);
+
+      // Convertir timestamps a objetos Date y formatearlos
+      const labels = humidityData.map((item) => {
+        const timestamp = new Date(item.timestamp);
+        return timestamp.toLocaleString(); // Puedes personalizar este formato según tus preferencias
+      });
+
+      const humidityValues = humidityData.map((item) => item.humidity);
+      const temperatureValues = temperatureData.map((item) => item.temperature);
+
+      updateChartData(labels, humidityValues, temperatureValues);
+    } catch (error) {
+      console.error("Error:", error);
     }
-  };
+  }
+};
 
   useEffect(() => {
     // Obtén la ID de la primera compostera y establece el estado inicial
     const fetchFirstCompostBinId = async () => {
       try {
-        const response = await fetch("http://0.0.0.0:8080/api/compost_bins/all_ids");
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/compost_bins/all_ids`);
         if (!response.ok) {
           throw new Error("Error al obtener los IDs de las composteras");
         }
