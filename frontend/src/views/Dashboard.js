@@ -17,7 +17,7 @@
 
 */
 import LineChart from "charts/linechart";
-import React from "react";
+import React, {useEffect, useState} from "react";
 // react plugin used to create charts
 import {Line, Pie} from "react-chartjs-2";
 // reactstrap components
@@ -39,6 +39,20 @@ import Tables from "./Tables";
 
 
 function Dashboard() {
+      const [compostBins, setCompostBins] = useState([]);
+
+  useEffect(() => {
+    // Realizar una solicitud GET al endpoint /compost_bins
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/compost_bins`)
+      .then((response) => response.json())
+      .then((data) => {
+        setCompostBins(data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }, []);
+
     return (
         <>
             <div className="content">
@@ -54,8 +68,8 @@ function Dashboard() {
                                     </Col>
                                     <Col md="8" xs="7">
                                         <div className="numbers">
-                                            <p className="card-category">Capacity</p>
-                                            <CardTitle tag="p">150GB</CardTitle>
+                                            <p className="card-category">Number of Compost bins</p>
+                                            <CardTitle tag="p">{compostBins.length}</CardTitle>
                                             <p/>
                                         </div>
                                     </Col>
