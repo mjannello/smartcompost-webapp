@@ -15,9 +15,9 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <BrowserRouter>
     <Routes>
-      <Route path="/signin" element={<SignIn />} /> {/* Agrega esta ruta para el componente SignIn */}
+      <Route path="/signin" element={<SignIn />} />
       <Route path="/admin/*" element={<AdminLayout />} />
-      <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/signin" replace />} />
     </Routes>
   </BrowserRouter>
 );

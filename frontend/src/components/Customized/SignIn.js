@@ -77,7 +77,7 @@ function SignIn() {
             >
               Sign In
             </Button>
-            {state && <Navigate to="/" replace={true} />}
+            {state && <Navigate to="/admin/dashboard" replace={true} />}
 
             <Grid container>
               <Grid item xs>
