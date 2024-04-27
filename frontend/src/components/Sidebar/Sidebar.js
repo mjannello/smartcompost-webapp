@@ -54,18 +54,18 @@ function Sidebar(props) {
     >
       <div className="logo">
         <a
-          href="https://www.creative-tim.com"
+          href="http://smartcompost.net:3000/admin/dashboard"
           className="simple-text logo-mini"
         >
           <div className="logo-img">
-            <img src={logo} alt="react-logo" />
+            <img src={"frontend/public/smartcompost-logo.ico"} alt="smtcmp-logo" />
           </div>
         </a>
         <a
-          href="https://www.creative-tim.com"
+          href="http://smartcompost.net:3000/admin/dashboard"
           className="simple-text logo-normal"
         >
-          Creative Tim
+          Smartcompost
         </a>
       </div>
       <div className="sidebar-wrapper" ref={sidebar}>
