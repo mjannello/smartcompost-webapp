@@ -1,7 +1,7 @@
 # Utiliza una imagen base de Python
 FROM python:3.8-slim
 
-# Establece el directorio de trabajo en /app_pkg
+# Establece el directorio de trabajo en /api
 WORKDIR /app
 
 # Copia el archivo de requerimientos al contenedor

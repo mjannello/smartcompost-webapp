@@ -13,9 +13,6 @@ database_url = os.environ.get('DATABASE_URL')
 # Configura SQLAlchemy con la URI de la base de datos
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 
-# Configura otras variables de entorno si es necesario
-# app_pkg.config['OTRA_VARIABLE'] = os.environ.get('OTRA_VARIABLE')
-
 # Resto de la configuración
 db = SQLAlchemy(app)
 
@@ -24,7 +21,7 @@ app.logger.setLevel(logging.INFO)  # Configura el nivel de registro
 formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] - %(message)s')
 
 # Configura el destino de registro en un archivo
-file_handler = logging.FileHandler('app_pkg.log')
+file_handler = logging.FileHandler('api.log')
 file_handler.setFormatter(formatter)
 app.logger.addHandler(file_handler)
 

@@ -1,16 +1,13 @@
-# smartcompost/app_pkg/views/measurements.py
-
 from flask import Blueprint, jsonify
-from ..models import Measurement
+from ..services.measurement_service import get_all_measurements, get_latest_measurement
 
 measurements_bp = Blueprint("measurements", __name__, url_prefix="/api/measurements")
 
 
 @measurements_bp.route("/", methods=["GET"])
-def get_measurements():
+def get_measurements_route():
     try:
-        # Aquí puedes implementar la lógica para obtener las mediciones, por ejemplo:
-        measurements = Measurement.query.all()
+        measurements = get_all_measurements()
         measurements_data = [{"id": m.id, "value": m.value, "timestamp": m.timestamp} for m in measurements]
         return jsonify({"measurements": measurements_data})
     except Exception as e:
@@ -18,10 +15,9 @@ def get_measurements():
 
 
 @measurements_bp.route("/latest", methods=["GET"])
-def get_latest_measurement():
+def get_latest_measurement_route():
     try:
-        # Aquí puedes implementar la lógica para obtener la última medición, por ejemplo:
-        latest_measurement = Measurement.query.order_by(Measurement.timestamp.desc()).first()
+        latest_measurement = get_latest_measurement()
         if latest_measurement:
             latest_measurement_data = {"id": latest_measurement.id, "value": latest_measurement.value,
                                        "timestamp": latest_measurement.timestamp}
@@ -30,5 +26,3 @@ def get_latest_measurement():
             return jsonify({"message": "No se encontraron mediciones"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# Puedes agregar más rutas y funciones según tus necesidades
