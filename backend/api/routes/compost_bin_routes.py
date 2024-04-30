@@ -72,16 +72,20 @@ def get_all_compost_bin_ids_route():
 def add_measurement_route():
     try:
         data = request.get_json()
+        compost_bin_id = data.get('compost_bin_id')
+        value = data.get('value')
+        timestamp = data.get('timestamp')
+        measurement_type = data.get('type')
 
-        if 'id' not in data or 'temperatura' not in data or 'humedad' not in data or 'datetime' not in data:
-            return jsonify({'error': 'Los campos id, temperatura, humedad y datetime son obligatorios'}), 400
+        user_id = request.headers.get('User-Id')
+        if not user_id.isdigit():
+            raise ValueError('El User-Id debe ser un entero')
 
-        new_measurement = add_measurement(data['id'], data['temperatura'], data['humedad'], data['datetime'])
-
-        measurement_schema = MeasurementSchema()
-        measurements_data = measurement_schema.dump(new_measurement)
-
-        return jsonify(measurements_data), 201
-
+        new_measurement = add_measurement(compost_bin_id, value, timestamp, measurement_type, user_id)
+        response = {
+            'message': 'Medición agregada correctamente',
+            'measurement_id': new_measurement.measurement_id
+        }
+        return jsonify(response), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
