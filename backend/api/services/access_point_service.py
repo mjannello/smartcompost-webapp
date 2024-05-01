@@ -47,7 +47,7 @@ def get_latest_measurements(access_point_id):
             for measurement_type, measurements in measurements_by_type.items():
                 latest_measurement = max(measurements, key=lambda x: x.timestamp) if measurements else None
                 if latest_measurement:
-                    latest_measurements[measurement_type][compost_bin.compost_bin_id] = {
+                    latest_measurements[compost_bin.compost_bin_id][measurement_type] = {
                         'value': latest_measurement.value,
                         'timestamp': latest_measurement.timestamp,
                         'type': latest_measurement.type

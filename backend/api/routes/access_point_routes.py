@@ -22,14 +22,21 @@ def get_latest_measurements_route(access_point_id):
     try:
         latest_measurements = get_latest_measurements(access_point_id)
 
-        serialized_measurements = {}
-        for measurement_type, compost_bin_data in latest_measurements.items():
-            serialized_compost_bins = {}
-            for compost_bin_id, measurement_data in compost_bin_data.items():
-                serialized_compost_bins[compost_bin_id] = MeasurementSchema().dump(measurement_data)
-            serialized_measurements[measurement_type] = serialized_compost_bins
+        serialized_measurements = []
 
-        return jsonify(serialized_measurements), 200
+        for compost_bin_id, measurements_by_type in latest_measurements.items():
+            compost_bin_data = {'compost_bin_id': compost_bin_id, 'measurements': []}
+            for measurement_type, measurement in measurements_by_type.items():
+                serialized_measurement = {
+                    'type': measurement_type,
+                    'value': measurement['value'],
+                    'timestamp': measurement['timestamp'].strftime("%Y-%m-%d %H:%M:%S")  # Formatear el timestamp
+                }
+                compost_bin_data['measurements'].append(serialized_measurement)
+
+            serialized_measurements.append(compost_bin_data)
+
+        return serialized_measurements, 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

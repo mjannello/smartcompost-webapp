@@ -26,15 +26,20 @@ if __name__ == '__main__':
         db.session.commit()
 
         # Crea CompostBins asociados a AccessPoints
-        compost_bin1 = CompostBin(name='Compost Bin 1', access_point_id=ap1.access_point_id)
-        compost_bin2 = CompostBin(name='Compost Bin 2', access_point_id=ap2.access_point_id)
+        compost_bin1 = CompostBin(compost_bin_id=100, name='Compost Bin 1', access_point_id=ap1.access_point_id)
+        compost_bin2 = CompostBin(compost_bin_id=200, name='Compost Bin 2', access_point_id=ap1.access_point_id)
+        compost_bin3 = CompostBin(compost_bin_id=300, name='Compost Bin 3', access_point_id=ap2.access_point_id)
+        compost_bin4 = CompostBin(compost_bin_id=400, name='Compost Bin 4', access_point_id=ap2.access_point_id)
 
         db.session.add(compost_bin1)
         db.session.add(compost_bin2)
+        db.session.add(compost_bin3)
+        db.session.add(compost_bin4)
         db.session.commit()
 
-        for _ in range(10):
-            for compost_bin in [compost_bin1, compost_bin2]:
+        # Agrega mediciones para cada compost_bin
+        for compost_bin in [compost_bin1, compost_bin2, compost_bin3, compost_bin4]:
+            for _ in range(10):
                 value = round(random.uniform(0, 100), 2)
                 timestamp = datetime.utcnow()
                 measurement_type = 'Temperature' if random.random() < 0.5 else 'Humidity'
