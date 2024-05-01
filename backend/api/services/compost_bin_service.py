@@ -1,5 +1,4 @@
-from .users_service import get_user_by_id
-from ..models import CompostBin, Measurement
+from ..models import CompostBin, Measurement, AccessPoint
 from ..app import db
 
 
@@ -31,28 +30,6 @@ def get_all_compost_bins_with_last_measurement():
     return compost_bins_data
 
 
-def add_measurement(compost_bin_id, value, timestamp, measurement_type, user_id):
-    try:
-        # Verificar si el usuario existe en la base de datos
-        user_exists = get_user_by_id(user_id)
-        if not user_exists:
-            raise ValueError('Usuario no autorizado')
-
-        new_measurement = Measurement(
-            compost_bin_id=compost_bin_id,
-            value=value,
-            timestamp=timestamp,
-            type=measurement_type
-        )
-
-        db.session.add(new_measurement)
-        db.session.commit()
-
-        return new_measurement
-    except Exception as e:
-        raise e
-
-
 def get_all_compost_bin_ids():
     try:
         compost_bins = CompostBin.query.all()
@@ -60,3 +37,20 @@ def get_all_compost_bin_ids():
         return compost_bin_ids
     except Exception as e:
         raise e
+
+
+def create_compost_bin(access_point_id, name):
+    try:
+        access_point = AccessPoint.query.get(access_point_id)
+        if not access_point:
+            raise ValueError('Punto de acceso no encontrado')
+
+        new_compost_bin = CompostBin(name=name, access_point=access_point)
+
+        db.session.add(new_compost_bin)
+        db.session.commit()
+
+        return new_compost_bin
+    except Exception as e:
+        raise e
+

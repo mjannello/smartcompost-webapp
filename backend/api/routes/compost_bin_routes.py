@@ -3,11 +3,11 @@ from flask import Blueprint, request, jsonify
 
 # from models import CompostBin, Measurement
 
-from ..app import app, db
-from ..models import CompostBin, Measurement
+from ..app import app
+from ..models import CompostBin
 from ..serializers import MeasurementSchema
 from ..services.compost_bin_service import get_last_measurement, get_all_compost_bins_with_last_measurement, \
-    get_all_compost_bin_ids, add_measurement
+    get_all_compost_bin_ids, create_compost_bin
 
 compost_bins_bp = Blueprint('compost_bins', __name__)
 
@@ -68,24 +68,18 @@ def get_all_compost_bin_ids_route():
         return jsonify({'error': str(e)}), 500
 
 
-@compost_bins_bp.route('/add_measurement', methods=['POST'])
-def add_measurement_route():
+@compost_bins_bp.route('/<int:access_point_id>/compost_bin', methods=['POST'])
+def create_compost_bin_route(access_point_id):
     try:
         data = request.get_json()
-        compost_bin_id = data.get('compost_bin_id')
-        value = data.get('value')
-        timestamp = data.get('timestamp')
-        measurement_type = data.get('type')
+        name = data.get('name')
 
-        user_id = request.headers.get('User-Id')
-        if not user_id.isdigit():
-            raise ValueError('El User-Id debe ser un entero')
-
-        new_measurement = add_measurement(compost_bin_id, value, timestamp, measurement_type, user_id)
+        new_compost_bin = create_compost_bin(access_point_id, name)
         response = {
-            'message': 'Medición agregada correctamente',
-            'measurement_id': new_measurement.measurement_id
+            'message': 'Compost bin creado correctamente',
+            'compost_bin_id': new_compost_bin.compost_bin_id
         }
         return jsonify(response), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+

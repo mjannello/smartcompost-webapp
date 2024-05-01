@@ -6,9 +6,10 @@ class MeasurementSchema(Schema):
         ordered = True
 
     measurement_id = fields.Int()
-    temperature = fields.Float()
-    humidity = fields.Float()
+    value = fields.Float()
     timestamp = fields.DateTime()
+    compost_bin_id = fields.Int()
+    type = fields.String()
 
 
 class CompostBinSchema(Schema):

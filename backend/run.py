@@ -33,7 +33,6 @@ if __name__ == '__main__':
         db.session.add(compost_bin2)
         db.session.commit()
 
-        # Agrega mediciones para compost_bin1 y compost_bin2
         for _ in range(10):
             for compost_bin in [compost_bin1, compost_bin2]:
                 value = round(random.uniform(0, 100), 2)

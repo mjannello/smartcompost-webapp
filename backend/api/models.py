@@ -29,7 +29,7 @@ class CompostBin(db.Model):
     name = db.Column(db.String(100), nullable=False)
     access_point_id = db.Column(db.Integer, db.ForeignKey('access_points.access_point_id'), nullable=False)
 
-    measurements = db.relationship('Measurement', backref='compost_bin', lazy=True)
+    measurements = db.relationship('Measurement', backref='compost_bin', lazy='dynamic')
 
 
 class Measurement(db.Model):
