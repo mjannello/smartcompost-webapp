@@ -1,4 +1,4 @@
-from ..models import AccessPoint, CompostBin
+from ..models import AccessPoint, CompostBin, Measurement
 from ..app import db
 from collections import defaultdict
 
@@ -54,3 +54,16 @@ def get_latest_measurements(access_point_id):
     except Exception as e:
         raise e
 
+
+def get_compost_bin_measurements(access_point_id, compost_bin_id):
+    try:
+        compost_bin = CompostBin.query.filter_by(compost_bin_id=compost_bin_id, access_point_id=access_point_id).first()
+        if not compost_bin:
+            raise ValueError('El compost bin no existe o no pertenece al access point dado')
+
+        measurements = Measurement.query.filter_by(compost_bin_id=compost_bin_id).all()
+
+        return measurements
+
+    except Exception as e:
+        raise e
