@@ -46,3 +46,16 @@
     }
   }
 }
+
+.selected {
+  background-color: rgba(0, 0, 0, 0.1); /* Color de fondo más opaco para resaltar la selección */
+  cursor: pointer; /* Cambiar el cursor al hacer clic */
+}
+
+.card {
+  transition: background-color 0.3s; /* Agregar una transición suave al cambio de color de fondo */
+}
+
+.card:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* Cambiar el color de fondo en el hover */
+}
