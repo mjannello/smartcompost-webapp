@@ -1,4 +1,4 @@
-from ..models import AccessPoint, CompostBin
+from ..models import AccessPoint, CompostBin, Measurement
 from ..app import db
 from collections import defaultdict
 
@@ -30,27 +30,18 @@ def create_compost_bin_for_access_point(access_point_id, data):
         raise e
 
 
-def get_latest_measurements(access_point_id):
+def get_compost_bin_measurements(access_point_id, compost_bin_id, measurement_type=None):
     try:
-        latest_measurements = defaultdict(dict)
+        compost_bin = CompostBin.query.filter_by(compost_bin_id=compost_bin_id, access_point_id=access_point_id).first()
+        if not compost_bin:
+            raise ValueError('El compost bin no existe o no pertenece al access point dado')
 
-        compost_bins = CompostBin.query.filter_by(access_point_id=access_point_id).all()
+        if measurement_type:
+            measurements = Measurement.query.filter_by(compost_bin_id=compost_bin_id, type=measurement_type).all()
+        else:
+            measurements = Measurement.query.filter_by(compost_bin_id=compost_bin_id).all()
 
-        for compost_bin in compost_bins:
-            measurements_by_type = defaultdict(list)
-            for measurement in compost_bin.measurements:
-                measurements_by_type[measurement.type].append(measurement)
+        return measurements
 
-            for measurement_type, measurements in measurements_by_type.items():
-                latest_measurement = max(measurements, key=lambda x: x.timestamp) if measurements else None
-                if latest_measurement:
-                    latest_measurements[compost_bin.compost_bin_id][measurement_type] = {
-                        'value': latest_measurement.value,
-                        'timestamp': latest_measurement.timestamp,
-                        'type': latest_measurement.type
-                    }
-
-        return latest_measurements
     except Exception as e:
         raise e
-
