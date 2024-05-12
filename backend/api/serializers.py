@@ -15,6 +15,6 @@ class MeasurementSchema(Schema):
 class CompostBinSchema(Schema):
     compost_bin_id = fields.Int()
     name = fields.String()
-    description = fields.String()
+    access_point_id = fields.Int()
     measurements = fields.Nested(MeasurementSchema, many=True)
 

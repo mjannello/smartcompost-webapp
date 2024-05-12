@@ -1,6 +1,7 @@
 from flask import request, jsonify, Blueprint
-from ..serializers import MeasurementSchema
+from ..serializers import CompostBinSchema
 from ..services.access_point_service import get_latest_measurements, create_compost_bin_for_access_point
+from ..services.user_service import validate_access_point_from_user
 
 access_points_bp = Blueprint("access_points", __name__, url_prefix="/api/access_points")
 
@@ -11,8 +12,9 @@ def create_compost_bin_for_access_point_route(access_point_id):
         data = request.json
 
         compost_bin = create_compost_bin_for_access_point(access_point_id, data)
-
-        return jsonify(compost_bin), 201
+        compost_bin_schema = CompostBinSchema()
+        response = compost_bin_schema.dump(compost_bin)
+        return jsonify(response), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -20,6 +22,13 @@ def create_compost_bin_for_access_point_route(access_point_id):
 @access_points_bp.route('/<int:access_point_id>/latest_measurements', methods=['GET'])
 def get_latest_measurements_route(access_point_id):
     try:
+        user_id_header = request.headers.get('user-id')
+        if not user_id_header or not user_id_header.isdigit():
+            return jsonify({'error': 'El ID de usuario en el encabezado no es válido'}), 400
+
+        user_id = int(user_id_header)
+        validate_access_point_from_user(access_point_id, user_id)
+
         latest_measurements = get_latest_measurements(access_point_id)
 
         serialized_measurements = []

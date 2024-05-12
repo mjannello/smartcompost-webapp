@@ -1,4 +1,4 @@
-from ..models import AccessPoint, CompostBin, Measurement
+from ..models import AccessPoint, CompostBin
 from ..app import db
 from collections import defaultdict
 
@@ -24,7 +24,7 @@ def create_compost_bin_for_access_point(access_point_id, data):
         db.session.add(compost_bin)
         db.session.commit()
 
-        return {'message': 'Compost bin created successfully'}, 201
+        return compost_bin
     except Exception as e:
         db.session.rollback()
         raise e
@@ -34,16 +34,13 @@ def get_latest_measurements(access_point_id):
     try:
         latest_measurements = defaultdict(dict)
 
-        # Obtén todas las composteras asociadas al punto de acceso
         compost_bins = CompostBin.query.filter_by(access_point_id=access_point_id).all()
 
         for compost_bin in compost_bins:
-            # Obtén las mediciones asociadas a cada compostera y agrúpalas por tipo
             measurements_by_type = defaultdict(list)
             for measurement in compost_bin.measurements:
                 measurements_by_type[measurement.type].append(measurement)
 
-            # Para cada tipo de medición, obtén la última medición
             for measurement_type, measurements in measurements_by_type.items():
                 latest_measurement = max(measurements, key=lambda x: x.timestamp) if measurements else None
                 if latest_measurement:
