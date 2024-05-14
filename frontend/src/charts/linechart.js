@@ -25,14 +25,18 @@ const LineChart = ({ accessPointId, compostBinId, measurementType }) => {
 
         const values = data.map((item) => item.value);
         const timestamps = data.map((item) => item.timestamp);
+        let borderColor = "#f17e5d"
+        if (measurementType === "Humidity"){
+          borderColor = "#6bd098"
+        }
 
         setChartData({
           labels: timestamps,
           datasets: [
             {
               label: measurementType,
-              borderColor: "#" + ((Math.random() * 0xffffff) << 0).toString(16),
-              backgroundColor: "#" + ((Math.random() * 0xffffff) << 0).toString(16),
+              borderColor: borderColor,
+              backgroundColor: borderColor,
               pointRadius: 0,
               pointHoverRadius: 0,
               borderWidth: 3,

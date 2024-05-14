@@ -45,3 +45,27 @@ def get_compost_bin_measurements(access_point_id, compost_bin_id, measurement_ty
 
     except Exception as e:
         raise e
+
+
+def get_compost_bins_with_measurements(access_point_id):
+    try:
+        compost_bins = CompostBin.query.filter_by(access_point_id=access_point_id).all()
+
+        compost_bins_with_measurements = []
+        for compost_bin in compost_bins:
+            measurements = Measurement.query.filter_by(compost_bin_id=compost_bin.compost_bin_id).all()
+            serialized_measurements = [{
+                'value': measurement.value,
+                'timestamp': measurement.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                'type': measurement.type
+            } for measurement in measurements]
+            compost_bin_data = {
+                'compost_bin_id': compost_bin.compost_bin_id,
+                'name': compost_bin.name,
+                'measurements': serialized_measurements
+            }
+            compost_bins_with_measurements.append(compost_bin_data)
+
+        return compost_bins_with_measurements
+    except Exception as e:
+        raise e

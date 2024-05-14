@@ -52,7 +52,10 @@ function AccessPointDetails() {
                   <div>
                     <h6>Last Measurements:</h6>
                     <LineChart accessPointId={accessPointId} compostBinId={compostBin.compost_bin_id} measurementType={"Temperature"} />
+                    <LineChart accessPointId={accessPointId} compostBinId={compostBin.compost_bin_id} measurementType={"Humidity"} />
+
                   </div>
+
                 )}
               </CardBody>
             </Card>
