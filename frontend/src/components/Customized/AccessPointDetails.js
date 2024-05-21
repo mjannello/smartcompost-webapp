@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Card, CardBody, CardTitle } from "reactstrap";
+import {Card, CardBody, CardFooter, CardTitle} from "reactstrap";
 import LineChart from "../../charts/linechart";
 
 function AccessPointDetails() {
@@ -52,12 +52,18 @@ function AccessPointDetails() {
                   <div>
                     <h6>Last Measurements:</h6>
                     <LineChart accessPointId={accessPointId} compostBinId={compostBin.compost_bin_id} measurementType={"Temperature"} />
+                     <hr />
                     <LineChart accessPointId={accessPointId} compostBinId={compostBin.compost_bin_id} measurementType={"Humidity"} />
-
                   </div>
 
                 )}
               </CardBody>
+              <CardFooter>
+                <hr />
+                <div className="stats">
+                  <i className="fa fa-history" /> Updated 3 minutes ago
+                </div>
+              </CardFooter>
             </Card>
           ))}
         </div>

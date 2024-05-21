@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Card, CardHeader, CardTitle, CardBody, CardFooter } from "reactstrap";
 import AccessPointsCardsView from "./AccessPointsCardsView";
+import Notifications from "./Notifications";
 
 function Dashboard() {
   const [compostBins, setCompostBins] = useState([]);
@@ -19,33 +20,16 @@ function Dashboard() {
   return (
     <>
       <div className="content">
-        {/* Reemplazar las cards en la primera fila con AccessPointsView */}
+        {/*<Row>*/}
+        {/*  <Col md="12">*/}
+        {/*    <Notifications />*/}
+        {/*  </Col>*/}
+        {/*</Row>        */}
         <Row>
           <Col md="12">
             <AccessPointsCardsView />
           </Col>
         </Row>
-        <Row>
-          <Col md="12">
-            <Card>
-              <CardHeader>
-                <CardTitle tag="h5">Historic Compost bins data</CardTitle>
-              </CardHeader>
-              <CardBody>
-                {/* Asegúrate de importar y usar el componente LineChart */}
-                {/* <LineChart /> */}
-              </CardBody>
-              <CardFooter>
-                <hr />
-                <div className="stats">
-                  <i className="fa fa-history" /> Updated 3 minutes ago
-                </div>
-              </CardFooter>
-            </Card>
-          </Col>
-        </Row>
-        {/* Asegúrate de importar y usar el componente Tables */}
-        {/* <Tables /> */}
       </div>
     </>
   );
