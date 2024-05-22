@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
         # Crea AccessPoints asociados a usuarios
         ap1 = AccessPoint(name='Access Point 1', mac_address='abcd', user_id=user1.user_id)
-        ap2 = AccessPoint(name='Access Point 2', mac_address='abcd', user_id=user2.user_id)
+        ap2 = AccessPoint(name='Access Point 2', mac_address='bcda', user_id=user2.user_id)
 
         db.session.add(ap1)
         db.session.add(ap2)
@@ -27,9 +27,9 @@ if __name__ == '__main__':
 
         # Crea Nodes asociados a AccessPoints
         node1 = Node(node_id=100, mac_address='abcd', name='Node 1', access_point_id=ap1.access_point_id)
-        node2 = Node(node_id=200, mac_address='abcd', name='Node 2', access_point_id=ap1.access_point_id)
-        node3 = Node(node_id=300, mac_address='abcd', name='Node 3', access_point_id=ap2.access_point_id)
-        node4 = Node(node_id=400, mac_address='abcd', name='Node 4', access_point_id=ap2.access_point_id)
+        node2 = Node(node_id=200, mac_address='dabc', name='Node 2', access_point_id=ap1.access_point_id)
+        node3 = Node(node_id=300, mac_address='cdab', name='Node 3', access_point_id=ap2.access_point_id)
+        node4 = Node(node_id=400, mac_address='bcda', name='Node 4', access_point_id=ap2.access_point_id)
 
         db.session.add(node1)
         db.session.add(node2)

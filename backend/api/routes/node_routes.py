@@ -65,6 +65,11 @@ def get_all_node_ids_route():
         return jsonify({'error': str(e)}), 500
 
 
+from flask import Blueprint, request, jsonify
+
+nodes_bp = Blueprint('nodes', __name__)
+
+
 @nodes_bp.route('/<int:access_point_id>/node', methods=['POST'])
 def create_node_route(access_point_id):
     try:
@@ -78,5 +83,7 @@ def create_node_route(access_point_id):
             'node_id': new_node.node_id
         }
         return jsonify(response), 201
+    except ValueError as ve:
+        return jsonify({'error': str(ve)}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Ocurrió un error inesperado'}), 500

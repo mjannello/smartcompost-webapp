@@ -16,8 +16,8 @@ class AccessPoint(db.Model):
     __tablename__ = 'access_points'
 
     access_point_id = db.Column(db.Integer, primary_key=True)
-    mac_address = db.Column(db.String(100), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
+    mac_address = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
 
     nodes = db.relationship('Node', backref='access_point', lazy=True)
@@ -27,8 +27,8 @@ class Node(db.Model):
     __tablename__ = 'nodes'
 
     node_id = db.Column(db.Integer, primary_key=True)
-    mac_address = db.Column(db.String(100), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
+    mac_address = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), unique=True, nullable=False)
     access_point_id = db.Column(db.Integer, db.ForeignKey('access_points.access_point_id'), nullable=False)
 
     node_measurements = db.relationship('NodeMeasurement', backref='node', lazy='dynamic')
@@ -43,4 +43,3 @@ class NodeMeasurement(db.Model):
     node_id = db.Column(db.Integer, db.ForeignKey('nodes.node_id'), nullable=False)
 
     type = db.Column(db.String(100), nullable=False)
-
