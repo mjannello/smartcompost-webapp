@@ -1,6 +1,10 @@
+from datetime import datetime
+
+from sqlalchemy.exc import IntegrityError
+
 from .user_service import get_user_by_id
 from ..app import db
-from ..models import NodeMeasurement
+from ..models import NodeMeasurement, Node, AccessPoint, User
 
 
 def get_all_measurements():
@@ -19,22 +23,44 @@ def get_latest_measurement():
         raise e
 
 
-def new_measurement(node_id, value, timestamp, measurement_type, user_id):
+def add_measurement(user_id, mac_address_ap, ap_datetime, ap_battery_level, mac_address_node, node_measurements):
     try:
-        user_exists = get_user_by_id(user_id)
-        if not user_exists:
-            raise ValueError('Usuario no autorizado')
+        # Verificar que el usuario existe
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError('Usuario no encontrado')
 
-        measurement = NodeMeasurement(
-            node_id=node_id,
-            value=value,
-            timestamp=timestamp,
-            type=measurement_type
-        )
+        # Verificar que el punto de acceso existe y pertenece al usuario
+        access_point = AccessPoint.query.filter_by(mac_address=mac_address_ap, user_id=user_id).first()
+        if not access_point:
+            raise ValueError('Punto de acceso no encontrado o no pertenece al usuario')
 
-        db.session.add(measurement)
+        # Verificar que el nodo existe y pertenece al punto de acceso
+        node = Node.query.filter_by(mac_address=mac_address_node, access_point_id=access_point.access_point_id).first()
+        if not node:
+            raise ValueError('Nodo no encontrado o no pertenece al punto de acceso')
+
+        # Parsear y validar la fecha y hora
+        ap_datetime_parsed = datetime.fromisoformat(ap_datetime)
+
+        # Guardar las mediciones del nodo
+        for measurement in node_measurements:
+            measurement_datetime = datetime.fromisoformat(measurement['datetime'])
+            new_measurement = NodeMeasurement(
+                value=measurement['value'],
+                timestamp=measurement_datetime,
+                type=measurement['type'],
+                node_id=node.node_id
+            )
+            db.session.add(new_measurement)
+
+        # Hacer commit de todas las operaciones
         db.session.commit()
 
-        return measurement
+        return True
+    except IntegrityError as e:
+        db.session.rollback()
+        raise ValueError('Error de integridad en la base de datos')
     except Exception as e:
+        db.session.rollback()
         raise e
