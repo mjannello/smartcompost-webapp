@@ -54,7 +54,7 @@ function Sidebar(props) {
     >
       <div className="logo">
         <a
-          href="http://smartcompost.net:3000/admin/dashboard"
+         href={process.env.REACT_APP_BASE_URL + "/admin/dashboard"}
           className="simple-text logo-mini"
         >
           <div className="logo-img">
@@ -62,7 +62,7 @@ function Sidebar(props) {
           </div>
         </a>
         <a
-          href="http://smartcompost.net:3000/admin/dashboard"
+         href={process.env.REACT_APP_BASE_URL + "/admin/dashboard"}
           className="simple-text logo-normal"
         >
           Smartcompost
