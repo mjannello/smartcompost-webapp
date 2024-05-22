@@ -16,28 +16,31 @@ class AccessPoint(db.Model):
     __tablename__ = 'access_points'
 
     access_point_id = db.Column(db.Integer, primary_key=True)
+    mac_address = db.Column(db.String(100), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
 
-    compost_bins = db.relationship('CompostBin', backref='access_point', lazy=True)
+    nodes = db.relationship('Node', backref='access_point', lazy=True)
 
 
-class CompostBin(db.Model):
-    __tablename__ = 'compost_bins'
+class Node(db.Model):
+    __tablename__ = 'nodes'
 
-    compost_bin_id = db.Column(db.Integer, primary_key=True)
+    node_id = db.Column(db.Integer, primary_key=True)
+    mac_address = db.Column(db.String(100), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     access_point_id = db.Column(db.Integer, db.ForeignKey('access_points.access_point_id'), nullable=False)
 
-    measurements = db.relationship('Measurement', backref='compost_bin', lazy='dynamic')
+    node_measurements = db.relationship('NodeMeasurement', backref='node', lazy='dynamic')
 
 
-class Measurement(db.Model):
-    __tablename__ = 'measurements'
+class NodeMeasurement(db.Model):
+    __tablename__ = 'node_measurements'
 
-    measurement_id = db.Column(db.Integer, primary_key=True)
+    node_measurement_id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.Float, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=db.func.now())
-    compost_bin_id = db.Column(db.Integer, db.ForeignKey('compost_bins.compost_bin_id'), nullable=False)
+    node_id = db.Column(db.Integer, db.ForeignKey('nodes.node_id'), nullable=False)
 
     type = db.Column(db.String(100), nullable=False)
+

@@ -5,7 +5,7 @@ function Tables() {
 
   useEffect(() => {
     // Realizar una solicitud GET al endpoint /compost_bins
-    fetch(`${process.env.REACT_APP_API_BASE_URL}/compost_bins`)
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/nodes`)
       .then((response) => response.json())
       .then((data) => {
         setCompostBins(data);

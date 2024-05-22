@@ -7,7 +7,7 @@ const CompostBinSelector = ({ onCompostBinChange }) => {
   useEffect(() => {
     const fetchCompostBinIds = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/compost_bins/all_ids`);
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/nodes/all_ids`);
         if (!response.ok) {
           throw new Error("Error al obtener los IDs de las composteras");
         }

@@ -9,7 +9,7 @@ const LineChart = ({ accessPointId, compostBinId, measurementType }) => {
 
   useEffect(() => {
     const fetchDataForCompostBin = async () => {
-      const apiUrl = `${process.env.REACT_APP_API_BASE_URL}/access_points/${accessPointId}/compost_bins/${compostBinId}/measurements?type=${measurementType}`;
+      const apiUrl = `${process.env.REACT_APP_API_BASE_URL}/access_points/${accessPointId}/nodes/${compostBinId}/measurements?type=${measurementType}`;
 
       try {
         const response = await fetch(apiUrl,{

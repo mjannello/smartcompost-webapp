@@ -2,7 +2,7 @@ from datetime import datetime
 import random
 
 from api.app import app, db
-from api.models import User, AccessPoint, CompostBin, Measurement
+from api.models import User, AccessPoint, Node, NodeMeasurement
 
 if __name__ == '__main__':
     with app.app_context():
@@ -18,39 +18,39 @@ if __name__ == '__main__':
         db.session.commit()
 
         # Crea AccessPoints asociados a usuarios
-        ap1 = AccessPoint(name='Access Point 1', user_id=user1.user_id)
-        ap2 = AccessPoint(name='Access Point 2', user_id=user2.user_id)
+        ap1 = AccessPoint(name='Access Point 1', mac_address='abcd', user_id=user1.user_id)
+        ap2 = AccessPoint(name='Access Point 2', mac_address='abcd', user_id=user2.user_id)
 
         db.session.add(ap1)
         db.session.add(ap2)
         db.session.commit()
 
-        # Crea CompostBins asociados a AccessPoints
-        compost_bin1 = CompostBin(compost_bin_id=100, name='Compost Bin 1', access_point_id=ap1.access_point_id)
-        compost_bin2 = CompostBin(compost_bin_id=200, name='Compost Bin 2', access_point_id=ap1.access_point_id)
-        compost_bin3 = CompostBin(compost_bin_id=300, name='Compost Bin 3', access_point_id=ap2.access_point_id)
-        compost_bin4 = CompostBin(compost_bin_id=400, name='Compost Bin 4', access_point_id=ap2.access_point_id)
+        # Crea Nodes asociados a AccessPoints
+        node1 = Node(node_id=100, mac_address='abcd', name='Node 1', access_point_id=ap1.access_point_id)
+        node2 = Node(node_id=200, mac_address='abcd', name='Node 2', access_point_id=ap1.access_point_id)
+        node3 = Node(node_id=300, mac_address='abcd', name='Node 3', access_point_id=ap2.access_point_id)
+        node4 = Node(node_id=400, mac_address='abcd', name='Node 4', access_point_id=ap2.access_point_id)
 
-        db.session.add(compost_bin1)
-        db.session.add(compost_bin2)
-        db.session.add(compost_bin3)
-        db.session.add(compost_bin4)
+        db.session.add(node1)
+        db.session.add(node2)
+        db.session.add(node3)
+        db.session.add(node4)
         db.session.commit()
 
-        # Agrega mediciones para cada compost_bin
-        for compost_bin in [compost_bin1, compost_bin2, compost_bin3, compost_bin4]:
+        # Agrega mediciones para cada node
+        for node in [node1, node2, node3, node4]:
             for _ in range(10):
                 value = round(random.uniform(0, 100), 2)
                 timestamp = datetime.utcnow()
                 measurement_type = 'Temperature' if random.random() < 0.5 else 'Humidity'
 
-                measurement = Measurement(
+                node_measurement = NodeMeasurement(
                     value=value,
                     timestamp=timestamp,
-                    compost_bin_id=compost_bin.compost_bin_id,
+                    node_id=node.node_id,
                     type=measurement_type
                 )
-                db.session.add(measurement)
+                db.session.add(node_measurement)
 
         db.session.commit()
 
