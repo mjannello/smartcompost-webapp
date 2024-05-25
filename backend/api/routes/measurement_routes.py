@@ -34,24 +34,24 @@ def get_latest_measurement_route():
 def add_measurement_route():
     try:
         # Extraer user_id del encabezado
-        user_id = request.headers.get('user-id')
-        if not user_id:
-            return jsonify({'error': 'Encabezado user-id es requerido'}), 400
+        # user_id = request.headers.get('user-id')
+        # if not user_id:
+        #     return jsonify({'error': 'Encabezado user-id es requerido'}), 400
 
         # Extraer el cuerpo de la solicitud
         data = request.get_json()
-        mac_address_ap = data.get('mac_address_ap')
+        ap_id = data.get('ap_id')
         ap_datetime = data.get('ap_datetime')
         ap_battery_level = data.get('ap_battery_level')
-        mac_address_node = data.get('mac_address_node')
+        node_id = data.get('node_id')
         node_measurements = data.get('node_measurments')
 
         # Validar que todos los campos están presentes
-        if not (mac_address_ap and ap_datetime and ap_battery_level is not None and mac_address_node and node_measurements):
+        if not (ap_id and ap_datetime and ap_battery_level is not None and node_id and node_measurements):
             return jsonify({'error': 'Todos los campos son requeridos'}), 400
 
         # Llamar a la función de servicio para agregar la medición
-        add_measurement(user_id, mac_address_ap, ap_datetime, ap_battery_level, mac_address_node, node_measurements)
+        add_measurement(ap_id, ap_datetime, ap_battery_level, node_id, node_measurements)
 
         return jsonify({'message': 'Mediciones agregadas correctamente'}), 201
     except ValueError as ve:

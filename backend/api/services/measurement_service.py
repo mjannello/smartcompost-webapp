@@ -23,15 +23,15 @@ def get_latest_measurement():
         raise e
 
 
-def add_measurement(user_id, mac_address_ap, ap_datetime, ap_battery_level, mac_address_node, node_measurements):
+def add_measurement(mac_address_ap, ap_datetime, ap_battery_level, mac_address_node, node_measurements):
     try:
         # Verificar que el usuario existe
-        user = User.query.get(user_id)
-        if not user:
-            raise ValueError('Usuario no encontrado')
+        # user = User.query.get(user_id)
+        # if not user:
+        #     raise ValueError('Usuario no encontrado')
 
         # Verificar que el punto de acceso existe y pertenece al usuario
-        access_point = AccessPoint.query.filter_by(mac_address=mac_address_ap, user_id=user_id).first()
+        access_point = AccessPoint.query.filter_by(mac_address=mac_address_ap).first()
         if not access_point:
             raise ValueError('Punto de acceso no encontrado o no pertenece al usuario')
 
