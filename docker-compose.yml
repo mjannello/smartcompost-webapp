@@ -1,9 +1,9 @@
-version: '3'
+version: '3.8'
 services:
   nginx:
     image: nginx:latest
     ports:
-      - "80:80"  # Mapea el puerto del contenedor al puerto local
+      - "80:80"
     volumes:
       - ./nginx/smartcompost.conf:/etc/nginx/nginx.conf
     depends_on:
@@ -14,25 +14,37 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"  # Mapea el puerto del contenedor al puerto local
     depends_on:
       - db
-    command: [ "wait-for-it.sh", "db:5432", "--", "python", "run.py" ]
     environment:
-      DATABASE_URL: postgresql://mjannello:mypassword@db:5432/smartcompost_db
-  db:
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: mjannello
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: smartcompost_db
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: mjannello
+      DB_PASSWORD: mypassword
+      DB_NAME: smartcompost_db
     ports:
-      - "5432:5432"
+      - "8080:8080"
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: smartcompost_db
+      MYSQL_USER: mjannello
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "3307:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile  # Usa el Dockerfile del frontend
-    env_file: ./frontend/.env.local # prod: ./frontend/.env.production
+      dockerfile: Dockerfile
+    env_file: ./frontend/.env.local
     ports:
       - "3000:3000"
+
+volumes:
+  db-data:
