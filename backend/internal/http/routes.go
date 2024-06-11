@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gorilla/mux"
+	measurementport "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/port"
 	nodeport "github.com/mjannello/smartcompost-webapp/backend/internal/node/port"
 )
 
@@ -10,14 +11,19 @@ type RouterHandler interface {
 }
 
 type routerHandler struct {
-	nodeHandler nodeport.Handler
+	nodeHandler        nodeport.Handler
+	measurementHandler measurementport.Handler
 }
 
 func (r *routerHandler) RouteURLs(router *mux.Router) {
-	prefix := "/api/nodes"
-	router.HandleFunc(prefix, r.nodeHandler.GetNodes).Methods("GET")
+	prefix := "/api"
+	nodesPrefix := prefix + "/nodes"
+	measurementSuffix := "/measurements"
+	router.HandleFunc(nodesPrefix, r.nodeHandler.GetNodes).Methods("GET")
+	router.HandleFunc(prefix+"/{nodeID}"+measurementSuffix, r.measurementHandler.GetMeasurementsByNodeID).Methods("GET")
+
 }
 
-func NewRouterHandler(nodeHandler nodeport.Handler) RouterHandler {
-	return &routerHandler{nodeHandler: nodeHandler}
+func NewRouterHandler(nodeHandler nodeport.Handler, measurementHandler measurementport.Handler) RouterHandler {
+	return &routerHandler{nodeHandler: nodeHandler, measurementHandler: measurementHandler}
 }

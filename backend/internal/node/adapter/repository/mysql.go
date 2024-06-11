@@ -5,9 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/node"
+	"time"
 )
 
-const GetAllNodes = "SELECT id, name FROM nodes"
+const (
+	GetAllNodes = "SELECT id, description, type, last_updated FROM nodes"
+)
 
 type mySQL struct {
 	db *sql.DB
@@ -33,11 +36,20 @@ func (m *mySQL) GetAllNodes(ctx context.Context) ([]node.Node, error) {
 	var nodes []node.Node
 	for rows.Next() {
 		var n node.Node
-		err = rows.Scan(&n.ID, &n.Description)
+		var lastUpdatedStr string
+		err = rows.Scan(&n.ID, &n.Description, &n.Type, &lastUpdatedStr)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not scan node: %w", err)
 		}
+
+		lastUpdated, err := time.Parse("2006-01-02 15:04:05", lastUpdatedStr)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, fmt.Errorf("could not parse last_updated: %w", err)
+		}
+
+		n.LastUpdated = lastUpdated
 		nodes = append(nodes, n)
 	}
 
