@@ -1,22 +1,29 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
+	_ "github.com/gorilla/mux"
+	http2 "github.com/mjannello/smartcompost-webapp/backend/internal/http"
 	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/mjannello/smartcompost-webapp/backend/config"
-	"github.com/mjannello/smartcompost-webapp/backend/internal/http"
-	"github.com/mjannello/smartcompost-webapp/backend/internal/node/adapter/repository"
-	"github.com/mjannello/smartcompost-webapp/backend/internal/node/app"
-	"github.com/mjannello/smartcompost-webapp/backend/internal/node/port"
+	noderepository "github.com/mjannello/smartcompost-webapp/backend/internal/node/adapter/repository"
+	nodeapp "github.com/mjannello/smartcompost-webapp/backend/internal/node/app"
+	nodeport "github.com/mjannello/smartcompost-webapp/backend/internal/node/port"
 )
 
 func main() {
-	cfg, err := config.LoadConfig("./cfg/cfg.yaml")
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		log.Fatal("CONFIG_PATH environment variable is not set")
+	}
+
+	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
 		log.Fatalf("Error loading cfg: %v", err)
 	}
@@ -28,18 +35,19 @@ func main() {
 	dbName := cfg.Database.Name
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPassword, dbHost, dbPort, dbName)
-	database, err := sqlx.Open("mysql", dsn)
+	database, err := sql.Open("mysql", dsn)
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
 	}
 	defer database.Close()
 
-	nodeRepo := repository.NewMySQLNodeRepository(database)
-	nodeApp := app.NewNodeService(nodeRepo)
-	router := mux.NewRouter()
+	nodeRepo := noderepository.NewMySQL(database)
+	nodeService := nodeapp.NewNodeService(nodeRepo)
+	nodeHandler := nodeport.NewHTTPHandler(nodeService)
 
-	port.RegisterRoutes(router)
-	http.RegisterRoutes(router)
+	router := mux.NewRouter()
+	routerHandler := http2.NewRouterHandler(nodeHandler)
+	routerHandler.RouteURLs(router)
 
 	log.Println("Starting server on :8080...")
 	if err := http.ListenAndServe(":8080", router); err != nil {

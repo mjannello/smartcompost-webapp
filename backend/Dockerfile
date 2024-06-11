@@ -7,9 +7,10 @@ COPY go.mod .
 RUN go mod download
 
 COPY . .
+COPY config/yml/config.yml /app/config/config.yml
 
 RUN go build -o /app/smartcompost-webapp ./cmd
 
-EXPOSE 5000
+EXPOSE 8080
 
 CMD ["/app/smartcompost-webapp"]

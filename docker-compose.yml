@@ -22,6 +22,7 @@ services:
       DB_USER: mjannello
       DB_PASSWORD: mypassword
       DB_NAME: smartcompost_db
+      CONFIG_PATH: /app/config/config.yml
     ports:
       - "8080:8080"
 
