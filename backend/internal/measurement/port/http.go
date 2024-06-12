@@ -2,8 +2,10 @@ package port
 
 import (
 	"encoding/json"
+	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	measurementapp "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/app"
@@ -41,8 +43,41 @@ func (h *handler) GetMeasurementsByNodeID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	var serializedMeasurements []MeasurementRestModel
+	for _, m := range measurements {
+		serializedMeasurement := AppToRestMeasurementModel(m)
+		serializedMeasurements = append(serializedMeasurements, serializedMeasurement)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(measurements); err != nil {
+
+	if err := json.NewEncoder(w).Encode(serializedMeasurements); err != nil {
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+	}
+}
+
+type MeasurementRestModel struct {
+	ID        uint64  `json:"id"`
+	NodeID    uint64  `json:"node_id"`
+	Value     float64 `json:"value"`
+	Timestamp string  `json:"timestamp"`
+}
+
+func AppToRestMeasurementModel(m measurement.Measurement) MeasurementRestModel {
+	return MeasurementRestModel{
+		ID:        m.ID,
+		NodeID:    m.NodeID,
+		Value:     m.Value,
+		Timestamp: m.Timestamp.Format("2006-01-02 15:04:05"),
+	}
+}
+
+func RestToAppMeasurementModel(m MeasurementRestModel) measurement.Measurement {
+	timestamp, _ := time.Parse("2006-01-02 15:04:05", m.Timestamp)
+	return measurement.Measurement{
+		ID:        m.ID,
+		NodeID:    m.NodeID,
+		Value:     m.Value,
+		Timestamp: timestamp,
 	}
 }
