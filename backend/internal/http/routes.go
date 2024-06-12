@@ -21,6 +21,7 @@ func (r *routerHandler) RouteURLs(router *mux.Router) {
 	measurementSuffix := "/measurements"
 	router.HandleFunc(nodesPrefix, r.nodeHandler.GetNodes).Methods("GET")
 	router.HandleFunc(prefix+"/{nodeID}"+measurementSuffix, r.measurementHandler.GetMeasurementsByNodeID).Methods("GET")
+	router.HandleFunc("/api/{node_id}/add_measurement", r.measurementHandler.AddMeasurement).Methods("POST")
 
 }
 

@@ -9,7 +9,10 @@ import (
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 )
 
-const GetAllMeasurementsByNodeID = "SELECT id, node_id, value, timestamp FROM measurements WHERE node_id = ?"
+const (
+	GetAllMeasurementsByNodeID = "SELECT id, node_id, value, timestamp, type FROM measurements WHERE node_id = ?"
+	InsertNewMeasurement       = "INSERT INTO measurements (node_id, value, timestamp, type) VALUES (?, ?, ?, ?)"
+)
 
 type mySQL struct {
 	db *sql.DB
@@ -36,7 +39,7 @@ func (m *mySQL) GetAllMeasurementsByNodeID(ctx context.Context, nodeID uint64) (
 	for rows.Next() {
 		var m measurement.Measurement
 		var timestampStr string
-		err = rows.Scan(&m.ID, &m.NodeID, &m.Value, &timestampStr)
+		err = rows.Scan(&m.ID, &m.NodeID, &m.Value, &timestampStr, &m.Type)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not scan measurement: %w", err)
@@ -63,4 +66,23 @@ func (m *mySQL) GetAllMeasurementsByNodeID(ctx context.Context, nodeID uint64) (
 	}
 
 	return measurements, nil
+}
+
+func (m *mySQL) AddMeasurement(ctx context.Context, measurement measurement.Measurement) error {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("could not begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, InsertNewMeasurement, measurement.NodeID, measurement.Value, measurement.Timestamp, measurement.Type)
+	if err != nil {
+		return fmt.Errorf("could not insert measurement: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("could not commit transaction: %w", err)
+	}
+
+	return nil
 }

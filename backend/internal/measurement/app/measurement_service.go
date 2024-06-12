@@ -8,6 +8,7 @@ import (
 
 type MeasurementService interface {
 	GetMeasurementsByNodeID(ctx context.Context, nodeID uint64) ([]measurement.Measurement, error)
+	AddMeasurements(ctx context.Context, measurements []measurement.Measurement) error
 }
 
 type measurementService struct {
@@ -24,4 +25,13 @@ func (ms *measurementService) GetMeasurementsByNodeID(ctx context.Context, nodeI
 		return nil, fmt.Errorf("could not get measurements: %w", err)
 	}
 	return measurements, nil
+}
+
+func (ms *measurementService) AddMeasurements(ctx context.Context, measurements []measurement.Measurement) error {
+	for _, m := range measurements {
+		if err := ms.repo.AddMeasurement(ctx, m); err != nil {
+			return fmt.Errorf("error adding measurement: %w", err)
+		}
+	}
+	return nil
 }

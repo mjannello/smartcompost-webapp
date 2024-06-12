@@ -21,6 +21,7 @@ import (
 )
 
 func main() {
+
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
 		log.Fatal("CONFIG_PATH environment variable is not set")
