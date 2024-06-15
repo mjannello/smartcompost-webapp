@@ -45,13 +45,13 @@ func main() {
 	}
 	defer database.Close()
 
-	nodeRepo := noderepository.NewMySQL(database)
+	nodeRepo := noderepository.NewNodeRepository(database)
 	nodeService := nodeapp.NewNodeService(nodeRepo)
-	nodeHandler := nodeport.NewHTTPHandler(nodeService)
+	nodeHandler := nodeport.NewNodeHandler(nodeService)
 
-	measurementRepo := measurementrepo.NewMySQL(database)
-	measurementService := measurementapp.NewService(measurementRepo)
-	measurementHandler := measurementport.NewHTTPHandler(measurementService)
+	measurementRepo := measurementrepo.NewMeasurementRepository(database)
+	measurementService := measurementapp.NewMeasurementService(measurementRepo)
+	measurementHandler := measurementport.NewMeasurementHandler(measurementService)
 
 	router := mux.NewRouter()
 	routerHandler := http2.NewRouterHandler(nodeHandler, measurementHandler)

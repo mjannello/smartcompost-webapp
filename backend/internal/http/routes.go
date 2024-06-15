@@ -10,6 +10,13 @@ type RouterHandler interface {
 	RouteURLs(router *mux.Router)
 }
 
+func NewRouterHandler(nodeHandler nodeport.Handler, measurementHandler measurementport.Handler) RouterHandler {
+	return &routerHandler{
+		nodeHandler:        nodeHandler,
+		measurementHandler: measurementHandler,
+	}
+}
+
 type routerHandler struct {
 	nodeHandler        nodeport.Handler
 	measurementHandler measurementport.Handler
@@ -18,13 +25,19 @@ type routerHandler struct {
 func (r *routerHandler) RouteURLs(router *mux.Router) {
 	prefix := "/api"
 	nodesPrefix := prefix + "/nodes"
-	measurementSuffix := "/measurements"
+
+	// Nodes
 	router.HandleFunc(nodesPrefix, r.nodeHandler.GetNodes).Methods("GET")
-	router.HandleFunc(prefix+"/{nodeID}"+measurementSuffix, r.measurementHandler.GetMeasurementsByNodeID).Methods("GET")
-	router.HandleFunc("/api/{node_id}/add_measurement", r.measurementHandler.AddMeasurement).Methods("POST")
+	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.GetNodeByID).Methods("GET")
+	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.UpdateNode).Methods("PUT")
+	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.DeleteNode).Methods("DELETE")
 
-}
+	// Measurements
+	measurementsPrefix := nodesPrefix + "/{nodeID}/measurements"
+	router.HandleFunc(measurementsPrefix, r.measurementHandler.GetMeasurementsByNodeID).Methods("GET")
+	router.HandleFunc(measurementsPrefix, r.measurementHandler.AddMeasurement).Methods("POST")
+	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.GetMeasurementByID).Methods("GET")
+	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.UpdateMeasurement).Methods("PUT")
+	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.DeleteMeasurement).Methods("DELETE")
 
-func NewRouterHandler(nodeHandler nodeport.Handler, measurementHandler measurementport.Handler) RouterHandler {
-	return &routerHandler{nodeHandler: nodeHandler, measurementHandler: measurementHandler}
 }
