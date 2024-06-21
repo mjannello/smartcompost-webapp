@@ -95,12 +95,13 @@ func (h *handler) UpdateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var node nodemodel.Node
-	if err := json.NewDecoder(r.Body).Decode(&node); err != nil {
+	var nodeRest NodeRestModel
+	if err := json.NewDecoder(r.Body).Decode(&nodeRest); err != nil {
 		log.Printf("[Handler] UpdateNode - Invalid request body: %s", err.Error())
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+	node := RestNodeModelToApp(nodeRest)
 	node.ID = nodeID
 
 	ctx := r.Context()

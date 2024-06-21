@@ -67,6 +67,14 @@ func (h *handler) GetMeasurementsByNodeID(w http.ResponseWriter, r *http.Request
 
 func (h *handler) GetMeasurementByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	nodeIDStr := vars["nodeID"]
+	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
+	if err != nil {
+		log.Println("[Handler] GetMeasurementByID - Invalid nodeID")
+		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
+		return
+	}
+
 	measurementIDStr := vars["measurementID"]
 	measurementID, err := strconv.ParseUint(measurementIDStr, 10, 64)
 	if err != nil {
@@ -76,6 +84,8 @@ func (h *handler) GetMeasurementByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+
+	// Obtain the measurement from the service
 	measurement, err := h.measurementService.GetMeasurementByID(ctx, measurementID)
 	if err != nil {
 		log.Printf("[Handler] GetMeasurementByID - Error getting measurement: %s", err.Error())
@@ -83,6 +93,14 @@ func (h *handler) GetMeasurementByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate that the measurement belongs to the correct node
+	if measurement.NodeID != nodeID {
+		log.Println("[Handler] GetMeasurementByID - Measurement does not belong to the specified node")
+		http.Error(w, "Measurement does not belong to the specified node", http.StatusNotFound)
+		return
+	}
+
+	// Respond with the measurement
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(measurement); err != nil {
 		log.Printf("[Handler] GetMeasurementByID - Error encoding response: %s", err.Error())
@@ -95,6 +113,14 @@ func (h *handler) GetMeasurementByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) UpdateMeasurement(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	nodeIDStr := vars["nodeID"]
+	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
+	if err != nil {
+		log.Println("[Handler] UpdateMeasurement - Invalid nodeID")
+		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
+		return
+	}
+
 	measurementIDStr := vars["measurementID"]
 	measurementID, err := strconv.ParseUint(measurementIDStr, 10, 64)
 	if err != nil {
@@ -110,6 +136,7 @@ func (h *handler) UpdateMeasurement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	measurement.ID = measurementID
+	measurement.NodeID = nodeID
 
 	ctx := r.Context()
 	updatedMeasurement, err := h.measurementService.UpdateMeasurement(ctx, measurement)
@@ -125,6 +152,14 @@ func (h *handler) UpdateMeasurement(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	nodeIDStr := vars["nodeID"]
+	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
+	if err != nil {
+		log.Println("[Handler] DeleteMeasurement - Invalid nodeID")
+		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
+		return
+	}
+
 	measurementIDStr := vars["measurementID"]
 	measurementID, err := strconv.ParseUint(measurementIDStr, 10, 64)
 	if err != nil {
@@ -134,6 +169,19 @@ func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	measurement, err := h.measurementService.GetMeasurementByID(ctx, measurementID)
+	if err != nil {
+		log.Printf("[Handler] DeleteMeasurement - Error getting measurement: %s", err.Error())
+		http.Error(w, "Error getting measurement", http.StatusInternalServerError)
+		return
+	}
+
+	if measurement.NodeID != nodeID {
+		log.Println("[Handler] DeleteMeasurement - Measurement does not belong to the specified node")
+		http.Error(w, "Measurement does not belong to the specified node", http.StatusNotFound)
+		return
+	}
+
 	deletedID, err := h.measurementService.DeleteMeasurement(ctx, measurementID)
 	if err != nil {
 		log.Printf("[Handler] DeleteMeasurement - Error deleting measurement: %s", err.Error())
