@@ -50,7 +50,7 @@ func main() {
 	nodeHandler := nodeport.NewNodeHandler(nodeService)
 
 	measurementRepo := measurementrepo.NewMeasurementRepository(database)
-	measurementService := measurementapp.NewMeasurementService(measurementRepo)
+	measurementService := measurementapp.NewMeasurementService(measurementRepo, nodeService)
 	measurementHandler := measurementport.NewMeasurementHandler(measurementService)
 
 	router := mux.NewRouter()

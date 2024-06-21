@@ -146,34 +146,63 @@ func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
-	var measurement MeasurementRestModel
-	if err := json.NewDecoder(r.Body).Decode(&measurement); err != nil {
+	// Extract nodeID from URI params
+	vars := mux.Vars(r)
+	nodeIDStr, ok := vars["nodeID"]
+	if !ok {
+		log.Printf("[Handler] AddMeasurement - nodeID not provided in URI")
+		http.Error(w, "nodeID not provided", http.StatusBadRequest)
+		return
+	}
+
+	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
+	if err != nil {
+		log.Printf("[Handler] AddMeasurement - Invalid nodeID: %s", err.Error())
+		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
+		return
+	}
+
+	// Decode request body
+	var measurementRest MeasurementRestModel
+	if err := json.NewDecoder(r.Body).Decode(&measurementRest); err != nil {
 		log.Printf("[Handler] AddMeasurement - Invalid request body: %s", err.Error())
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
+	// Convert RestModel to AppModel
+	measurements := RestMeasurementModelToApp(measurementRest)
+
+	// Add measurements to the node
 	ctx := r.Context()
-	createdMeasurement, err := h.measurementService.AddMeasurement(ctx, RestMeasurementModelToApp(measurement))
+	createdMeasurements, err := h.measurementService.AddNodeMeasurements(ctx, nodeID, measurements)
 	if err != nil {
-		log.Printf("[Handler] AddMeasurement - Error adding measurement: %s", err.Error())
-		http.Error(w, "Error adding measurement", http.StatusInternalServerError)
+		log.Printf("[Handler] AddMeasurement - Error adding measurements: %s", err.Error())
+		http.Error(w, "Error adding measurements", http.StatusInternalServerError)
 		return
 	}
 
+	// Respond with created measurements
 	w.WriteHeader(http.StatusCreated)
-	log.Printf("[Handler] AddMeasurement - Measurement added successfully. ID: %d", createdMeasurement.ID)
-}
-
-func RestMeasurementModelToApp(measurementRestModel MeasurementRestModel) measurementmodel.Measurement {
-	appModel := measurementmodel.Measurement{
-		ID:   measurementRestModel.ID,
-		Type: measurementRestModel.NodeType,
+	if err := json.NewEncoder(w).Encode(createdMeasurements); err != nil {
+		log.Printf("[Handler] AddMeasurement - Error encoding response: %s", err.Error())
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
 	}
 
-	appModel.Timestamp = time.Now().UTC()
+	log.Printf("[Handler] AddMeasurement - Measurements added successfully")
+}
 
-	return appModel
+func RestMeasurementModelToApp(measurementRestModel MeasurementRestModel) []measurementmodel.Measurement {
+	measurements := make([]measurementmodel.Measurement, len(measurementRestModel.NodeMeasurements))
+	for i, nm := range measurementRestModel.NodeMeasurements {
+		measurements[i] = measurementmodel.Measurement{
+			Value:     nm.Value,
+			Timestamp: nm.Timestamp,
+			Type:      nm.Type,
+		}
+	}
+	return measurements
 }
 
 func AppToRestMeasurementModel(m measurementmodel.Measurement) MeasurementRestModel {

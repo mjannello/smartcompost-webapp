@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	nodemodel "github.com/mjannello/smartcompost-webapp/backend/internal/node"
 )
@@ -12,6 +13,7 @@ type NodeService interface {
 	GetNodes(ctx context.Context) ([]nodemodel.Node, error)
 	GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node, error)
 	UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error)
+	UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error
 	DeleteNode(ctx context.Context, nodeID uint64) (uint64, error)
 }
 
@@ -61,4 +63,21 @@ func (ns *nodeService) DeleteNode(ctx context.Context, nodeID uint64) (uint64, e
 	}
 	log.Printf("Deleted node with ID %d", deletedID)
 	return deletedID, nil
+}
+
+func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error {
+	node, err := ns.GetNodeByID(ctx, nodeID)
+	if err != nil {
+		return fmt.Errorf("node not found: %w", err)
+	}
+
+	node.LastUpdated = lastUpdated
+
+	_, err = ns.UpdateNode(ctx, node)
+	if err != nil {
+		log.Printf("Error updating node last_updated: %v", err)
+		return fmt.Errorf("error updating node last_updated: %w", err)
+	}
+	log.Printf("Node last_updated updated successfully for nodeID: %d", nodeID)
+	return nil
 }
