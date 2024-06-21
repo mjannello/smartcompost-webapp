@@ -86,6 +86,7 @@ func (h *handler) GetNodeByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) UpdateNode(w http.ResponseWriter, r *http.Request) {
+	// TODO: Fix last_updated unmarshalling/format
 	vars := mux.Vars(r)
 	nodeIDStr := vars["nodeID"]
 	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
