@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	GetAllNodesQuery = "SELECT id, description, type, last_updated FROM nodes"
-	GetNodeByIDQuery = "SELECT id, description, type, last_updated FROM nodes WHERE id = ?"
+	GetAllNodesQuery = "SELECT id, fabric_code, description, type, last_updated FROM nodes"
+	GetNodeByIDQuery = "SELECT id, fabric_code, description, type, last_updated FROM nodes WHERE id = ?"
 	UpdateNodeQuery  = "UPDATE nodes SET description = ?, type = ?, last_updated = ? WHERE id = ?"
 	DeleteNodeQuery  = "DELETE FROM nodes WHERE id = ?"
 )
@@ -41,7 +41,7 @@ func (m *mySQL) GetAllNodes(ctx context.Context) ([]nodemodel.Node, error) {
 	for rows.Next() {
 		var n nodemodel.Node
 		var lastUpdatedStr string
-		err = rows.Scan(&n.ID, &n.Description, &n.Type, &lastUpdatedStr)
+		err = rows.Scan(&n.ID, &n.FabricCode, &n.Description, &n.Type, &lastUpdatedStr)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not scan node: %w", err)
@@ -78,7 +78,7 @@ func (m *mySQL) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node,
 	var n nodemodel.Node
 	var lastUpdatedStr string
 	row := tx.QueryRowContext(ctx, GetNodeByIDQuery, nodeID)
-	err = row.Scan(&n.ID, &n.Description, &n.Type, &lastUpdatedStr)
+	err = row.Scan(&n.ID, &n.FabricCode, &n.Description, &n.Type, &lastUpdatedStr)
 	if err != nil {
 		_ = tx.Rollback()
 		if err == sql.ErrNoRows {

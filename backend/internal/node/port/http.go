@@ -141,6 +141,7 @@ func (h *handler) DeleteNode(w http.ResponseWriter, r *http.Request) {
 
 type NodeRestModel struct {
 	ID           uint64      `json:"id"`
+	FabricCode   string      `json:"fabric_code"`
 	Description  string      `json:"description"`
 	Type         string      `json:"type"`
 	LastUpdated  time.Time   `json:"last_updated"`
@@ -150,6 +151,7 @@ type NodeRestModel struct {
 func RestNodeModelToApp(nodeRestModel NodeRestModel) nodemodel.Node {
 	return nodemodel.Node{
 		ID:          nodeRestModel.ID,
+		FabricCode:  nodeRestModel.FabricCode,
 		Description: nodeRestModel.Description,
 		Type:        nodeRestModel.Type,
 		LastUpdated: nodeRestModel.LastUpdated,

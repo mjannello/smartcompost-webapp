@@ -8,6 +8,7 @@ import (
 
 type Node struct {
 	ID           uint64
+	FabricCode   string
 	Description  string
 	Type         string
 	LastUpdated  time.Time
