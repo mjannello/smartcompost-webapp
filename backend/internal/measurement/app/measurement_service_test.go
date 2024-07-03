@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement/app"
+	"github.com/mjannello/smartcompost-webapp/backend/internal/node"
 	"github.com/mjannello/smartcompost-webapp/backend/pkg/clock"
 	"github.com/mjannello/smartcompost-webapp/backend/test"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestMeasurementService_GetMeasurementsByNodeID(t *testing.T) {
@@ -296,6 +298,130 @@ func TestMeasurementService_DeleteMeasurement(t *testing.T) {
 			tt.assert(t, &output{resultMeasurementDeletedID, err})
 			measurementRepositoryMock.AssertExpectations(t)
 			nodeServiceMock.AssertExpectations(t)
+
+		})
+	}
+}
+
+func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
+
+	type depFields struct {
+		measurementRepositoryMock *test.MeasurementRepositoryMock
+		nodeServiceMock           *test.NodeServiceMock
+		clockMock                 *clock.ClockMock
+	}
+	type input struct {
+		nodeID       uint64
+		measurements []measurement.Measurement
+	}
+	type output struct {
+		addedMeasurements []measurement.Measurement
+		err               error
+	}
+
+	timeNow := time.Date(2024, 06, 20, 20, 15, 30, 0, time.UTC)
+	expectedMeasurements := []measurement.Measurement{
+		{
+			ID:        uint64(10),
+			NodeID:    uint64(1),
+			Value:     20.0,
+			Type:      "Web",
+			Timestamp: timeNow,
+		},
+		{
+			ID:        uint64(20),
+			NodeID:    uint64(1),
+			Value:     25.0,
+			Type:      "Web",
+			Timestamp: timeNow,
+		},
+	}
+
+	tests := []struct {
+		name   string
+		in     input
+		on     func(*depFields)
+		assert func(*testing.T, *output)
+	}{
+		{
+			name: "add measurements by NodeID successfully",
+			in:   input{nodeID: uint64(1), measurements: expectedMeasurements},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeByID", uint64(1)).Return(node.Node{}, nil)
+				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
+				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], nil).Once()
+				df.clockMock.On("Time").Return(timeNow)
+				df.nodeServiceMock.On("UpdateNodeLastUpdated", uint64(1), timeNow).Return(nil)
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.NoError(t, out.err)
+				assert.Equal(t, expectedMeasurements, out.addedMeasurements)
+			},
+		},
+		{
+			name: "error getting node by ID",
+			in:   input{nodeID: uint64(1), measurements: expectedMeasurements},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeByID", uint64(1)).Return(node.Node{}, fmt.Errorf("test"))
+
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.Error(t, out.err)
+				assert.ErrorContains(t, out.err, "node not found: test")
+				assert.Nil(t, out.addedMeasurements)
+			},
+		},
+		{
+			name: "error adding measurement",
+			in:   input{nodeID: uint64(1), measurements: expectedMeasurements},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeByID", uint64(1)).Return(node.Node{}, nil)
+				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
+				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], fmt.Errorf("test"))
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.Error(t, out.err)
+				assert.ErrorContains(t, out.err, "error adding measurement: test")
+				assert.Nil(t, out.addedMeasurements)
+			},
+		},
+		{
+			name: "error updating last updated time",
+			in:   input{nodeID: uint64(1), measurements: expectedMeasurements},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeByID", uint64(1)).Return(node.Node{}, nil)
+				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
+				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], nil).Once()
+				df.clockMock.On("Time").Return(timeNow)
+				df.nodeServiceMock.On("UpdateNodeLastUpdated", uint64(1), timeNow).Return(fmt.Errorf("test"))
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.Error(t, out.err)
+				assert.ErrorContains(t, out.err, "error updating node last_updated: test")
+				assert.Nil(t, out.addedMeasurements)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Having
+			measurementRepositoryMock := &test.MeasurementRepositoryMock{}
+			nodeServiceMock := &test.NodeServiceMock{}
+			clockMock := &clock.ClockMock{}
+			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock, clockMock)
+
+			df := &depFields{measurementRepositoryMock: measurementRepositoryMock, nodeServiceMock: nodeServiceMock, clockMock: clockMock}
+			tt.on(df)
+
+			// When
+			resultMeasurements, err := s.AddNodeMeasurements(context.Background(), tt.in.nodeID, tt.in.measurements)
+
+			// Then
+			tt.assert(t, &output{resultMeasurements, err})
+			measurementRepositoryMock.AssertExpectations(t)
+			nodeServiceMock.AssertExpectations(t)
+			clockMock.AssertExpectations(t)
 
 		})
 	}
