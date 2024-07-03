@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	DBDateTimeFormat                = "2006-01-02 15:04:05"
 	GetAllMeasurementsByNodeIDQuery = "SELECT id, node_id, value, timestamp, type FROM measurements WHERE node_id = ?"
 	GetMeasurementByIDQuery         = "SELECT id, node_id, value, timestamp, type FROM measurements WHERE id = ?"
 	UpdateMeasurementQuery          = "UPDATE measurements SET value = ?, timestamp = ?, type = ? WHERE id = ?"

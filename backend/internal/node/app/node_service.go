@@ -15,6 +15,7 @@ type NodeService interface {
 	UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error)
 	UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error
 	DeleteNode(ctx context.Context, nodeID uint64) (uint64, error)
+	GetNodeIDByFabricCode(ctx context.Context, fabricCode string) (uint64, error)
 }
 
 type nodeService struct {
@@ -23,6 +24,16 @@ type nodeService struct {
 
 func NewNodeService(repository nodemodel.Repository) NodeService {
 	return &nodeService{nodeRepository: repository}
+}
+
+func (ns *nodeService) GetNodeIDByFabricCode(ctx context.Context, fabricCode string) (uint64, error) {
+	nodeID, err := ns.nodeRepository.GetNodeIDByFabricCode(ctx, fabricCode)
+	if err != nil {
+		log.Printf("Error fetching nodeID: %v", err)
+		return 0, fmt.Errorf("error getting nodeID: %w", err)
+	}
+	log.Printf("Fetched %d nodeID", nodeID)
+	return nodeID, nil
 }
 
 func (ns *nodeService) GetNodes(ctx context.Context) ([]nodemodel.Node, error) {

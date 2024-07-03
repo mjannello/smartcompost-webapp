@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement/app"
-	"github.com/mjannello/smartcompost-webapp/backend/internal/node"
 	"github.com/mjannello/smartcompost-webapp/backend/pkg/clock"
 	"github.com/mjannello/smartcompost-webapp/backend/test"
 	"github.com/stretchr/testify/assert"
@@ -311,7 +310,7 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		clockMock                 *clock.ClockMock
 	}
 	type input struct {
-		nodeID       uint64
+		fabricCode   string
 		measurements []measurement.Measurement
 	}
 	type output struct {
@@ -344,10 +343,10 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		assert func(*testing.T, *output)
 	}{
 		{
-			name: "add measurements by NodeID successfully",
-			in:   input{nodeID: uint64(1), measurements: expectedMeasurements},
+			name: "add measurements by fabricCode successfully",
+			in:   input{fabricCode: "abcd", measurements: expectedMeasurements},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeByID", uint64(1)).Return(node.Node{}, nil)
+				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], nil).Once()
 				df.clockMock.On("Time").Return(timeNow)
@@ -360,10 +359,9 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error getting node by ID",
-			in:   input{nodeID: uint64(1), measurements: expectedMeasurements},
+			in:   input{fabricCode: "abcd", measurements: expectedMeasurements},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeByID", uint64(1)).Return(node.Node{}, fmt.Errorf("test"))
-
+				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(0, fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
 				assert.Error(t, out.err)
@@ -373,9 +371,9 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error adding measurement",
-			in:   input{nodeID: uint64(1), measurements: expectedMeasurements},
+			in:   input{fabricCode: "abcd", measurements: expectedMeasurements},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeByID", uint64(1)).Return(node.Node{}, nil)
+				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], fmt.Errorf("test"))
 			},
@@ -387,9 +385,9 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error updating last updated time",
-			in:   input{nodeID: uint64(1), measurements: expectedMeasurements},
+			in:   input{fabricCode: "abcd", measurements: expectedMeasurements},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeByID", uint64(1)).Return(node.Node{}, nil)
+				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], nil).Once()
 				df.clockMock.On("Time").Return(timeNow)
@@ -415,7 +413,7 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 			tt.on(df)
 
 			// When
-			resultMeasurements, err := s.AddNodeMeasurements(context.Background(), tt.in.nodeID, tt.in.measurements)
+			resultMeasurements, err := s.AddNodeMeasurements(context.Background(), tt.in.fabricCode, tt.in.measurements)
 
 			// Then
 			tt.assert(t, &output{resultMeasurements, err})

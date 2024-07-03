@@ -38,3 +38,10 @@ func (ns *NodeServiceMock) DeleteNode(ctx context.Context, nodeID uint64) (uint6
 	//TODO implement me
 	panic("implement me")
 }
+
+func (ns *NodeServiceMock) GetNodeIDByFabricCode(_ context.Context, fabricCode string) (uint64, error) {
+	args := ns.Called(fabricCode)
+	nodeID, _ := args.Get(0).(uint64)
+	e, _ := args.Get(1).(error)
+	return nodeID, e
+}

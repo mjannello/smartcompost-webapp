@@ -13,7 +13,7 @@ import (
 )
 
 type Handler interface {
-	GetMeasurementsByNodeID(w http.ResponseWriter, r *http.Request)
+	GetMeasurementsByNodeFabricCode(w http.ResponseWriter, r *http.Request)
 	GetMeasurementByID(w http.ResponseWriter, r *http.Request)
 	UpdateMeasurement(w http.ResponseWriter, r *http.Request)
 	DeleteMeasurement(w http.ResponseWriter, r *http.Request)
@@ -30,20 +30,14 @@ func NewMeasurementHandler(measurementService measurementapp.MeasurementService)
 	}
 }
 
-func (h *handler) GetMeasurementsByNodeID(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetMeasurementsByNodeFabricCode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	nodeIDStr := vars["nodeID"]
-	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
-	if err != nil {
-		log.Println("[Handler] GetMeasurementsByNodeID - Invalid nodeID")
-		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
-		return
-	}
+	fabricCode := vars["fabricCode"]
 
 	ctx := r.Context()
-	measurements, err := h.measurementService.GetMeasurementsByNodeID(ctx, nodeID)
+	measurements, err := h.measurementService.GetMeasurementsByNodeFabricCode(ctx, fabricCode)
 	if err != nil {
-		log.Printf("[Handler] GetMeasurementsByNodeID - Error getting measurements: %s", err.Error())
+		log.Printf("[Handler] GetMeasurementsByNodeFabricCode - Error getting measurements: %s", err.Error())
 		http.Error(w, "Error getting measurements", http.StatusInternalServerError)
 		return
 	}
@@ -57,12 +51,12 @@ func (h *handler) GetMeasurementsByNodeID(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(serializedMeasurements); err != nil {
-		log.Printf("[Handler] GetMeasurementsByNodeID - Error encoding response: %s", err.Error())
+		log.Printf("[Handler] GetMeasurementsByNodeFabricCode - Error encoding response: %s", err.Error())
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("[Handler] GetMeasurementsByNodeID - Measurements fetched successfully for NodeID: %d", nodeID)
+	log.Printf("[Handler] GetMeasurementsByNodeFabricCode - Measurements fetched successfully for Node with Fabric Code: %s", fabricCode)
 }
 
 func (h *handler) GetMeasurementByID(w http.ResponseWriter, r *http.Request) {
@@ -196,17 +190,10 @@ func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 	// Extract nodeID from URI params
 	vars := mux.Vars(r)
-	nodeIDStr, ok := vars["nodeID"]
+	fabricCode, ok := vars["fabricCode"]
 	if !ok {
-		log.Printf("[Handler] AddMeasurement - nodeID not provided in URI")
-		http.Error(w, "nodeID not provided", http.StatusBadRequest)
-		return
-	}
-
-	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
-	if err != nil {
-		log.Printf("[Handler] AddMeasurement - Invalid nodeID: %s", err.Error())
-		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
+		log.Printf("[Handler] AddMeasurement - fabricCode not provided in URI")
+		http.Error(w, "fabricCode not provided", http.StatusBadRequest)
 		return
 	}
 
@@ -223,34 +210,28 @@ func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 
 	// Add measurements to the node
 	ctx := r.Context()
-	createdMeasurements, err := h.measurementService.AddNodeMeasurements(ctx, nodeID, measurements)
+	createdMeasurements, err := h.measurementService.AddNodeMeasurements(ctx, fabricCode, measurements)
 	if err != nil {
 		log.Printf("[Handler] AddMeasurement - Error adding measurements: %s", err.Error())
 		http.Error(w, "Error adding measurements", http.StatusInternalServerError)
 		return
 	}
 
+	// Convert created measurements to REST model
+	createdMeasurementRestModels := make([]MeasurementRestModel, len(createdMeasurements))
+	for i, m := range createdMeasurements {
+		createdMeasurementRestModels[i] = AppToRestMeasurementModel(m)
+	}
+
 	// Respond with created measurements
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(createdMeasurements); err != nil {
+	if err := json.NewEncoder(w).Encode(createdMeasurementRestModels); err != nil {
 		log.Printf("[Handler] AddMeasurement - Error encoding response: %s", err.Error())
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return
 	}
 
 	log.Printf("[Handler] AddMeasurement - Measurements added successfully")
-}
-
-func RestMeasurementModelToApp(measurementRestModel MeasurementRestModel) []measurementmodel.Measurement {
-	measurements := make([]measurementmodel.Measurement, len(measurementRestModel.NodeMeasurements))
-	for i, nm := range measurementRestModel.NodeMeasurements {
-		measurements[i] = measurementmodel.Measurement{
-			Value:     nm.Value,
-			Timestamp: nm.Timestamp,
-			Type:      nm.Type,
-		}
-	}
-	return measurements
 }
 
 func AppToRestMeasurementModel(m measurementmodel.Measurement) MeasurementRestModel {
@@ -268,6 +249,18 @@ func AppToRestMeasurementModel(m measurementmodel.Measurement) MeasurementRestMo
 	restModel.NodeMeasurements = append(restModel.NodeMeasurements, nodeMeasurement)
 
 	return restModel
+}
+
+func RestMeasurementModelToApp(measurementRestModel MeasurementRestModel) []measurementmodel.Measurement {
+	measurements := make([]measurementmodel.Measurement, len(measurementRestModel.NodeMeasurements))
+	for i, nm := range measurementRestModel.NodeMeasurements {
+		measurements[i] = measurementmodel.Measurement{
+			Value:     nm.Value,
+			Timestamp: nm.Timestamp,
+			Type:      nm.Type,
+		}
+	}
+	return measurements
 }
 
 type MeasurementRestModel struct {

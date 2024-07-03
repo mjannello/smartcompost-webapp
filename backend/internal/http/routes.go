@@ -33,8 +33,8 @@ func (r *routerHandler) RouteURLs(router *mux.Router) {
 	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.DeleteNode).Methods("DELETE")
 
 	// Measurements
-	measurementsPrefix := nodesPrefix + "/{nodeID}/measurements"
-	router.HandleFunc(measurementsPrefix, r.measurementHandler.GetMeasurementsByNodeID).Methods("GET")
+	measurementsPrefix := nodesPrefix + "/{fabricCode}/measurements"
+	router.HandleFunc(measurementsPrefix, r.measurementHandler.GetMeasurementsByNodeFabricCode).Methods("GET")
 	router.HandleFunc(measurementsPrefix, r.measurementHandler.AddMeasurement).Methods("POST")
 	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.GetMeasurementByID).Methods("GET")
 	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.UpdateMeasurement).Methods("PUT")

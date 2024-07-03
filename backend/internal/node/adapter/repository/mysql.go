@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	GetAllNodesQuery = "SELECT id, fabric_code, description, type, last_updated FROM nodes"
-	GetNodeByIDQuery = "SELECT id, fabric_code, description, type, last_updated FROM nodes WHERE id = ?"
-	UpdateNodeQuery  = "UPDATE nodes SET description = ?, type = ?, last_updated = ? WHERE id = ?"
-	DeleteNodeQuery  = "DELETE FROM nodes WHERE id = ?"
+	GetAllNodesQuery           = "SELECT id, fabric_code, description, type, last_updated FROM nodes"
+	GetNodeByIDQuery           = "SELECT id, fabric_code, description, type, last_updated FROM nodes WHERE id = ?"
+	GetNodeIDByFabricCodeQuery = "SELECT id FROM nodes WHERE fabric_code = ?"
+	UpdateNodeQuery            = "UPDATE nodes SET description = ?, type = ?, last_updated = ? WHERE id = ?"
+	DeleteNodeQuery            = "DELETE FROM nodes WHERE id = ?"
 )
 
 type mySQL struct {
@@ -22,6 +23,30 @@ type mySQL struct {
 
 func NewNodeRepository(db *sql.DB) nodemodel.Repository {
 	return &mySQL{db: db}
+}
+
+func (m *mySQL) GetNodeIDByFabricCode(ctx context.Context, fabricCode string) (uint64, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("could not begin transaction: %w", err)
+	}
+
+	var nodeID uint64
+	row := tx.QueryRowContext(ctx, GetNodeIDByFabricCodeQuery, fabricCode)
+	err = row.Scan(&nodeID)
+	if err != nil {
+		_ = tx.Rollback()
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("node not found")
+		}
+		return 0, fmt.Errorf("could not scan node ID: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return 0, fmt.Errorf("could not commit transaction: %w", err)
+	}
+
+	return nodeID, nil
 }
 
 func (m *mySQL) GetAllNodes(ctx context.Context) ([]nodemodel.Node, error) {

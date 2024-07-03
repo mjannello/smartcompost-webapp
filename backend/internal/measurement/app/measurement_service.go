@@ -10,11 +10,12 @@ import (
 )
 
 type MeasurementService interface {
+	GetMeasurementsByNodeFabricCode(ctx context.Context, fabricCode string) ([]measurementmodel.Measurement, error)
 	GetMeasurementsByNodeID(ctx context.Context, nodeID uint64) ([]measurementmodel.Measurement, error)
 	GetMeasurementByID(ctx context.Context, measurementID uint64) (measurementmodel.Measurement, error)
 	UpdateMeasurement(ctx context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error)
 	DeleteMeasurement(ctx context.Context, measurementID uint64) (uint64, error)
-	AddNodeMeasurements(ctx context.Context, nodeID uint64, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error)
+	AddNodeMeasurements(ctx context.Context, fabricCode string, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error)
 }
 
 type measurementService struct {
@@ -29,6 +30,14 @@ func NewMeasurementService(mr measurementmodel.Repository, ns nodeapp.NodeServic
 		nodeService:           ns,
 		clock:                 clock,
 	}
+}
+
+func (ms *measurementService) GetMeasurementsByNodeFabricCode(ctx context.Context, fabricCode string) ([]measurementmodel.Measurement, error) {
+	nodeID, err := ms.nodeService.GetNodeIDByFabricCode(ctx, fabricCode)
+	if err != nil {
+		return nil, err
+	}
+	return ms.GetMeasurementsByNodeID(ctx, nodeID)
 }
 
 func (ms *measurementService) GetMeasurementsByNodeID(ctx context.Context, nodeID uint64) ([]measurementmodel.Measurement, error) {
@@ -71,9 +80,9 @@ func (ms *measurementService) DeleteMeasurement(ctx context.Context, measurement
 	return deletedID, nil
 }
 
-func (ms *measurementService) AddNodeMeasurements(ctx context.Context, nodeID uint64, measurements []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
+func (ms *measurementService) AddNodeMeasurements(ctx context.Context, fabricCode string, measurements []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
 	// Validate that the node exists
-	_, err := ms.nodeService.GetNodeByID(ctx, nodeID)
+	nodeID, err := ms.nodeService.GetNodeIDByFabricCode(ctx, fabricCode)
 	if err != nil {
 		return nil, fmt.Errorf("node not found: %w", err)
 	}
