@@ -3,11 +3,10 @@ package app
 import (
 	"context"
 	"fmt"
-	nodeapp "github.com/mjannello/smartcompost-webapp/backend/internal/node/app"
-	"log"
-	"time"
-
 	measurementmodel "github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
+	nodeapp "github.com/mjannello/smartcompost-webapp/backend/internal/node/app"
+	"github.com/mjannello/smartcompost-webapp/backend/pkg/clock"
+	"log"
 )
 
 type MeasurementService interface {
@@ -21,12 +20,15 @@ type MeasurementService interface {
 type measurementService struct {
 	measurementRepository measurementmodel.Repository
 	nodeService           nodeapp.NodeService
+	clock                 clock.Clock
 }
 
-func NewMeasurementService(mr measurementmodel.Repository, ns nodeapp.NodeService) MeasurementService {
+func NewMeasurementService(mr measurementmodel.Repository, ns nodeapp.NodeService, clock clock.Clock) MeasurementService {
 	return &measurementService{
 		measurementRepository: mr,
-		nodeService:           ns}
+		nodeService:           ns,
+		clock:                 clock,
+	}
 }
 
 func (ms *measurementService) GetMeasurementsByNodeID(ctx context.Context, nodeID uint64) ([]measurementmodel.Measurement, error) {
@@ -89,7 +91,7 @@ func (ms *measurementService) AddNodeMeasurements(ctx context.Context, nodeID ui
 	}
 
 	// Update the node's last_updated field
-	lastUpdated := time.Now()
+	lastUpdated := ms.clock.Time()
 	err = ms.nodeService.UpdateNodeLastUpdated(ctx, nodeID, lastUpdated)
 	if err != nil {
 		return nil, fmt.Errorf("error updating node last_updated: %w", err)
