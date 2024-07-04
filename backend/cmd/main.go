@@ -9,7 +9,6 @@ import (
 	measurementrepo "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/adapter/repository"
 	measurementapp "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/app"
 	measurementport "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/port"
-	"github.com/mjannello/smartcompost-webapp/backend/pkg/clock"
 	"log"
 	"net/http"
 	"os"
@@ -46,14 +45,12 @@ func main() {
 	}
 	defer database.Close()
 
-	realClock := clock.NewClock()
-
 	nodeRepo := noderepository.NewNodeRepository(database)
 	nodeService := nodeapp.NewNodeService(nodeRepo)
 	nodeHandler := nodeport.NewNodeHandler(nodeService)
 
 	measurementRepo := measurementrepo.NewMeasurementRepository(database)
-	measurementService := measurementapp.NewMeasurementService(measurementRepo, nodeService, realClock)
+	measurementService := measurementapp.NewMeasurementService(measurementRepo, nodeService)
 	measurementHandler := measurementport.NewMeasurementHandler(measurementService)
 
 	router := mux.NewRouter()

@@ -5,42 +5,36 @@ import (
 	"fmt"
 	measurementmodel "github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 	nodeapp "github.com/mjannello/smartcompost-webapp/backend/internal/node/app"
-	"github.com/mjannello/smartcompost-webapp/backend/pkg/clock"
 	"log"
+	"time"
 )
 
 type MeasurementService interface {
-	GetMeasurementsByNodeFabricCode(ctx context.Context, fabricCode string) ([]measurementmodel.Measurement, error)
-	GetMeasurementsByNodeID(ctx context.Context, nodeID uint64) ([]measurementmodel.Measurement, error)
+	GetMeasurementsByNode(ctx context.Context, fabricCode string) ([]measurementmodel.Measurement, error)
 	GetMeasurementByID(ctx context.Context, measurementID uint64) (measurementmodel.Measurement, error)
 	UpdateMeasurement(ctx context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error)
 	DeleteMeasurement(ctx context.Context, measurementID uint64) (uint64, error)
-	AddNodeMeasurements(ctx context.Context, fabricCode string, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error)
+	AddNodeMeasurements(ctx context.Context, fabricCode string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error)
 }
 
 type measurementService struct {
 	measurementRepository measurementmodel.Repository
 	nodeService           nodeapp.NodeService
-	clock                 clock.Clock
 }
 
-func NewMeasurementService(mr measurementmodel.Repository, ns nodeapp.NodeService, clock clock.Clock) MeasurementService {
+func NewMeasurementService(mr measurementmodel.Repository, ns nodeapp.NodeService) MeasurementService {
 	return &measurementService{
 		measurementRepository: mr,
 		nodeService:           ns,
-		clock:                 clock,
 	}
 }
 
-func (ms *measurementService) GetMeasurementsByNodeFabricCode(ctx context.Context, fabricCode string) ([]measurementmodel.Measurement, error) {
+func (ms *measurementService) GetMeasurementsByNode(ctx context.Context, fabricCode string) ([]measurementmodel.Measurement, error) {
 	nodeID, err := ms.nodeService.GetNodeIDByFabricCode(ctx, fabricCode)
 	if err != nil {
-		return nil, err
+		log.Printf("Error fetching nodeID by fabric code %s: %v", fabricCode, err)
+		return nil, fmt.Errorf("error getting nodeID: %w", err)
 	}
-	return ms.GetMeasurementsByNodeID(ctx, nodeID)
-}
-
-func (ms *measurementService) GetMeasurementsByNodeID(ctx context.Context, nodeID uint64) ([]measurementmodel.Measurement, error) {
 	measurements, err := ms.measurementRepository.GetAllMeasurementsByNodeID(ctx, nodeID)
 	if err != nil {
 		log.Printf("Error fetching measurements for node ID %d: %v", nodeID, err)
@@ -80,7 +74,7 @@ func (ms *measurementService) DeleteMeasurement(ctx context.Context, measurement
 	return deletedID, nil
 }
 
-func (ms *measurementService) AddNodeMeasurements(ctx context.Context, fabricCode string, measurements []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
+func (ms *measurementService) AddNodeMeasurements(ctx context.Context, fabricCode string, nodeLastUpdated time.Time, measurements []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
 	// Validate that the node exists
 	nodeID, err := ms.nodeService.GetNodeIDByFabricCode(ctx, fabricCode)
 	if err != nil {
@@ -100,8 +94,7 @@ func (ms *measurementService) AddNodeMeasurements(ctx context.Context, fabricCod
 	}
 
 	// Update the node's last_updated field
-	lastUpdated := ms.clock.Time()
-	err = ms.nodeService.UpdateNodeLastUpdated(ctx, nodeID, lastUpdated)
+	err = ms.nodeService.UpdateNodeLastUpdated(ctx, nodeID, nodeLastUpdated)
 	if err != nil {
 		return nil, fmt.Errorf("error updating node last_updated: %w", err)
 	}

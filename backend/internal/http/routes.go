@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	measurementport "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/port"
 	nodeport "github.com/mjannello/smartcompost-webapp/backend/internal/node/port"
+	"net/http"
 )
 
 type RouterHandler interface {
@@ -27,17 +28,18 @@ func (r *routerHandler) RouteURLs(router *mux.Router) {
 	nodesPrefix := prefix + "/nodes"
 
 	// Nodes
-	router.HandleFunc(nodesPrefix, r.nodeHandler.GetNodes).Methods("GET")
-	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.GetNodeByID).Methods("GET")
-	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.UpdateNode).Methods("PUT")
-	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.DeleteNode).Methods("DELETE")
+	router.HandleFunc(nodesPrefix, r.nodeHandler.GetNodes).Methods(http.MethodGet)
+	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.GetNodeByID).Methods(http.MethodGet)
+	router.HandleFunc(nodesPrefix, r.nodeHandler.CreateNode).Methods(http.MethodPost)
+	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.UpdateNode).Methods(http.MethodPut)
+	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.DeleteNode).Methods(http.MethodDelete)
 
 	// Measurements
 	measurementsPrefix := nodesPrefix + "/{fabricCode}/measurements"
-	router.HandleFunc(measurementsPrefix, r.measurementHandler.GetMeasurementsByNodeFabricCode).Methods("GET")
-	router.HandleFunc(measurementsPrefix, r.measurementHandler.AddMeasurement).Methods("POST")
-	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.GetMeasurementByID).Methods("GET")
-	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.UpdateMeasurement).Methods("PUT")
-	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.DeleteMeasurement).Methods("DELETE")
+	router.HandleFunc(measurementsPrefix, r.measurementHandler.GetMeasurementsByNode).Methods(http.MethodGet)
+	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.GetMeasurementByID).Methods(http.MethodGet)
+	router.HandleFunc(measurementsPrefix, r.measurementHandler.AddMeasurement).Methods(http.MethodPost)
+	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.UpdateMeasurement).Methods(http.MethodPut)
+	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.DeleteMeasurement).Methods(http.MethodDelete)
 
 }

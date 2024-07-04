@@ -13,7 +13,7 @@ import (
 )
 
 type Handler interface {
-	GetMeasurementsByNodeFabricCode(w http.ResponseWriter, r *http.Request)
+	GetMeasurementsByNode(w http.ResponseWriter, r *http.Request)
 	GetMeasurementByID(w http.ResponseWriter, r *http.Request)
 	UpdateMeasurement(w http.ResponseWriter, r *http.Request)
 	DeleteMeasurement(w http.ResponseWriter, r *http.Request)
@@ -30,33 +30,33 @@ func NewMeasurementHandler(measurementService measurementapp.MeasurementService)
 	}
 }
 
-func (h *handler) GetMeasurementsByNodeFabricCode(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetMeasurementsByNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	fabricCode := vars["fabricCode"]
 
 	ctx := r.Context()
-	measurements, err := h.measurementService.GetMeasurementsByNodeFabricCode(ctx, fabricCode)
+	measurements, err := h.measurementService.GetMeasurementsByNode(ctx, fabricCode)
 	if err != nil {
-		log.Printf("[Handler] GetMeasurementsByNodeFabricCode - Error getting measurements: %s", err.Error())
+		log.Printf("[Handler] GetMeasurementsByNode - Error getting measurements: %s", err.Error())
 		http.Error(w, "Error getting measurements", http.StatusInternalServerError)
 		return
 	}
 
-	var serializedMeasurements []MeasurementRestModel
+	var serializedMeasurements []NodeMeasurementModel
 	for _, m := range measurements {
-		serializedMeasurement := AppToRestMeasurementModel(m)
+		serializedMeasurement := AppToRestNodeMeasurementModel(m)
 		serializedMeasurements = append(serializedMeasurements, serializedMeasurement)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(serializedMeasurements); err != nil {
-		log.Printf("[Handler] GetMeasurementsByNodeFabricCode - Error encoding response: %s", err.Error())
+		log.Printf("[Handler] GetMeasurementsByNode - Error encoding response: %s", err.Error())
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("[Handler] GetMeasurementsByNodeFabricCode - Measurements fetched successfully for Node with Fabric Code: %s", fabricCode)
+	log.Printf("[Handler] GetMeasurementsByNode - Measurements fetched successfully for Node with Fabric Code: %s", fabricCode)
 }
 
 func (h *handler) GetMeasurementByID(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +210,7 @@ func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 
 	// Add measurements to the node
 	ctx := r.Context()
-	createdMeasurements, err := h.measurementService.AddNodeMeasurements(ctx, fabricCode, measurements)
+	createdMeasurements, err := h.measurementService.AddNodeMeasurements(ctx, fabricCode, measurementRest.LastUpdated, measurements)
 	if err != nil {
 		log.Printf("[Handler] AddMeasurement - Error adding measurements: %s", err.Error())
 		http.Error(w, "Error adding measurements", http.StatusInternalServerError)
@@ -218,10 +218,7 @@ func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert created measurements to REST model
-	createdMeasurementRestModels := make([]MeasurementRestModel, len(createdMeasurements))
-	for i, m := range createdMeasurements {
-		createdMeasurementRestModels[i] = AppToRestMeasurementModel(m)
-	}
+	createdMeasurementRestModels := AppToNodeMeasurementsRestModel(createdMeasurements)
 
 	// Respond with created measurements
 	w.WriteHeader(http.StatusCreated)
@@ -234,9 +231,25 @@ func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler] AddMeasurement - Measurements added successfully")
 }
 
+func AppToNodeMeasurementsRestModel(measurements []measurementmodel.Measurement) []NodeMeasurementModel {
+	createdMeasurementRestModels := make([]NodeMeasurementModel, len(measurements))
+	for i, m := range measurements {
+		createdMeasurementRestModels[i] = AppToRestNodeMeasurementModel(m)
+	}
+	return createdMeasurementRestModels
+
+}
+
+func AppToRestNodeMeasurementModel(measurement measurementmodel.Measurement) NodeMeasurementModel {
+	return NodeMeasurementModel{
+		Value:     measurement.Value,
+		Timestamp: measurement.Timestamp,
+		Type:      measurement.Type,
+	}
+}
+
 func AppToRestMeasurementModel(m measurementmodel.Measurement) MeasurementRestModel {
 	restModel := MeasurementRestModel{
-		NodeType:         m.Type,
 		LastUpdated:      time.Now().UTC(),
 		NodeMeasurements: []NodeMeasurementModel{},
 	}
@@ -264,8 +277,6 @@ func RestMeasurementModelToApp(measurementRestModel MeasurementRestModel) []meas
 }
 
 type MeasurementRestModel struct {
-	ID               uint64                 `json:"id,omitempty"`
-	NodeType         string                 `json:"node_type"`
 	LastUpdated      time.Time              `json:"last_updated"`
 	NodeMeasurements []NodeMeasurementModel `json:"node_measurements"`
 }

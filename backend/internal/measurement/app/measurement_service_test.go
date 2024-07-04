@@ -5,21 +5,20 @@ import (
 	"fmt"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement/app"
-	"github.com/mjannello/smartcompost-webapp/backend/pkg/clock"
 	"github.com/mjannello/smartcompost-webapp/backend/test"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
-func TestMeasurementService_GetMeasurementsByNodeID(t *testing.T) {
+func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 
 	type depFields struct {
 		measurementRepositoryMock *test.MeasurementRepositoryMock
 		nodeServiceMock           *test.NodeServiceMock
 	}
 	type input struct {
-		nodeID uint64
+		fabricCode string
 	}
 	type output struct {
 		measurements []measurement.Measurement
@@ -40,8 +39,9 @@ func TestMeasurementService_GetMeasurementsByNodeID(t *testing.T) {
 	}{
 		{
 			name: "get measurements by NodeID successfully",
-			in:   input{nodeID: uint64(1)},
+			in:   input{fabricCode: "ABCD"},
 			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDByFabricCode", "ABCD").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("GetAllMeasurementsByNodeID", uint64(1)).Return(expectedMeasurements, nil)
 			},
 			assert: func(t *testing.T, out *output) {
@@ -50,9 +50,22 @@ func TestMeasurementService_GetMeasurementsByNodeID(t *testing.T) {
 			},
 		},
 		{
-			name: "error getting measurements by NodeID",
-			in:   input{nodeID: uint64(1)},
+			name: "error getting nodeID by fabric code",
+			in:   input{fabricCode: "ABCD"},
 			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDByFabricCode", "ABCD").Return(nil, fmt.Errorf("test"))
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.Error(t, out.err)
+				assert.ErrorContains(t, out.err, "error getting nodeID: test")
+				assert.Nil(t, out.measurements)
+			},
+		},
+		{
+			name: "error getting measurements by NodeID",
+			in:   input{fabricCode: "ABCD"},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDByFabricCode", "ABCD").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("GetAllMeasurementsByNodeID", uint64(1)).Return(nil, fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
@@ -68,14 +81,13 @@ func TestMeasurementService_GetMeasurementsByNodeID(t *testing.T) {
 			// Having
 			measurementRepositoryMock := &test.MeasurementRepositoryMock{}
 			nodeServiceMock := &test.NodeServiceMock{}
-			clockMock := &clock.ClockMock{}
-			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock, clockMock)
+			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock)
 
 			df := &depFields{measurementRepositoryMock: measurementRepositoryMock, nodeServiceMock: nodeServiceMock}
 			tt.on(df)
 
 			// When
-			resultMeasurements, err := s.GetMeasurementsByNodeID(context.Background(), tt.in.nodeID)
+			resultMeasurements, err := s.GetMeasurementsByNode(context.Background(), tt.in.fabricCode)
 
 			// Then
 			tt.assert(t, &output{resultMeasurements, err})
@@ -139,8 +151,7 @@ func TestMeasurementService_GetMeasurementByID(t *testing.T) {
 			// Having
 			measurementRepositoryMock := &test.MeasurementRepositoryMock{}
 			nodeServiceMock := &test.NodeServiceMock{}
-			clockMock := &clock.ClockMock{}
-			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock, clockMock)
+			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock)
 
 			df := &depFields{measurementRepositoryMock: measurementRepositoryMock, nodeServiceMock: nodeServiceMock}
 			tt.on(df)
@@ -215,8 +226,7 @@ func TestMeasurementService_UpdateMeasurement(t *testing.T) {
 			// Having
 			measurementRepositoryMock := &test.MeasurementRepositoryMock{}
 			nodeServiceMock := &test.NodeServiceMock{}
-			clockMock := &clock.ClockMock{}
-			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock, clockMock)
+			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock)
 
 			df := &depFields{measurementRepositoryMock: measurementRepositoryMock, nodeServiceMock: nodeServiceMock}
 			tt.on(df)
@@ -284,8 +294,7 @@ func TestMeasurementService_DeleteMeasurement(t *testing.T) {
 			// Having
 			measurementRepositoryMock := &test.MeasurementRepositoryMock{}
 			nodeServiceMock := &test.NodeServiceMock{}
-			clockMock := &clock.ClockMock{}
-			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock, clockMock)
+			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock)
 
 			df := &depFields{measurementRepositoryMock: measurementRepositoryMock, nodeServiceMock: nodeServiceMock}
 			tt.on(df)
@@ -307,10 +316,10 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 	type depFields struct {
 		measurementRepositoryMock *test.MeasurementRepositoryMock
 		nodeServiceMock           *test.NodeServiceMock
-		clockMock                 *clock.ClockMock
 	}
 	type input struct {
 		fabricCode   string
+		lastUpdated  time.Time
 		measurements []measurement.Measurement
 	}
 	type output struct {
@@ -344,12 +353,11 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 	}{
 		{
 			name: "add measurements by fabricCode successfully",
-			in:   input{fabricCode: "abcd", measurements: expectedMeasurements},
+			in:   input{fabricCode: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
 			on: func(df *depFields) {
 				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], nil).Once()
-				df.clockMock.On("Time").Return(timeNow)
 				df.nodeServiceMock.On("UpdateNodeLastUpdated", uint64(1), timeNow).Return(nil)
 			},
 			assert: func(t *testing.T, out *output) {
@@ -359,7 +367,7 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error getting node by ID",
-			in:   input{fabricCode: "abcd", measurements: expectedMeasurements},
+			in:   input{fabricCode: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
 			on: func(df *depFields) {
 				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(0, fmt.Errorf("test"))
 			},
@@ -371,7 +379,7 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error adding measurement",
-			in:   input{fabricCode: "abcd", measurements: expectedMeasurements},
+			in:   input{fabricCode: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
 			on: func(df *depFields) {
 				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
@@ -385,12 +393,11 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error updating last updated time",
-			in:   input{fabricCode: "abcd", measurements: expectedMeasurements},
+			in:   input{fabricCode: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
 			on: func(df *depFields) {
 				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], nil).Once()
-				df.clockMock.On("Time").Return(timeNow)
 				df.nodeServiceMock.On("UpdateNodeLastUpdated", uint64(1), timeNow).Return(fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
@@ -406,20 +413,18 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 			// Having
 			measurementRepositoryMock := &test.MeasurementRepositoryMock{}
 			nodeServiceMock := &test.NodeServiceMock{}
-			clockMock := &clock.ClockMock{}
-			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock, clockMock)
+			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock)
 
-			df := &depFields{measurementRepositoryMock: measurementRepositoryMock, nodeServiceMock: nodeServiceMock, clockMock: clockMock}
+			df := &depFields{measurementRepositoryMock: measurementRepositoryMock, nodeServiceMock: nodeServiceMock}
 			tt.on(df)
 
 			// When
-			resultMeasurements, err := s.AddNodeMeasurements(context.Background(), tt.in.fabricCode, tt.in.measurements)
+			resultMeasurements, err := s.AddNodeMeasurements(context.Background(), tt.in.fabricCode, tt.in.lastUpdated, tt.in.measurements)
 
 			// Then
 			tt.assert(t, &output{resultMeasurements, err})
 			measurementRepositoryMock.AssertExpectations(t)
 			nodeServiceMock.AssertExpectations(t)
-			clockMock.AssertExpectations(t)
 
 		})
 	}

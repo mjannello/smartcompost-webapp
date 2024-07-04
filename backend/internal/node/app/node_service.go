@@ -11,11 +11,13 @@ import (
 
 type NodeService interface {
 	GetNodes(ctx context.Context) ([]nodemodel.Node, error)
-	GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node, error)
+	GetNode(ctx context.Context, nodeID uint64) (nodemodel.Node, error)
+	GetNodeIDByFabricCode(ctx context.Context, fabricCode string) (uint64, error)
+	CreateNode(ctx context.Context, fabricCode, description, nodeType string) (nodemodel.Node, error)
 	UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error)
 	UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error
 	DeleteNode(ctx context.Context, nodeID uint64) (uint64, error)
-	GetNodeIDByFabricCode(ctx context.Context, fabricCode string) (uint64, error)
+	GetNodeByFabricCode(ctx context.Context, fabricCode string) (nodemodel.Node, error)
 }
 
 type nodeService struct {
@@ -46,7 +48,16 @@ func (ns *nodeService) GetNodes(ctx context.Context) ([]nodemodel.Node, error) {
 	return nodes, nil
 }
 
-func (ns *nodeService) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node, error) {
+func (ns *nodeService) GetNodeByFabricCode(ctx context.Context, fabricCode string) (nodemodel.Node, error) {
+	nodeID, err := ns.GetNodeIDByFabricCode(ctx, fabricCode)
+	if err != nil {
+		log.Printf("Error fetching nodeID by fabric code %s: %v", fabricCode, err)
+		return nodemodel.Node{}, fmt.Errorf("error getting nodeID: %w", err)
+	}
+	return ns.GetNode(ctx, nodeID)
+}
+
+func (ns *nodeService) GetNode(ctx context.Context, nodeID uint64) (nodemodel.Node, error) {
 	node, err := ns.nodeRepository.GetNodeByID(ctx, nodeID)
 	if err != nil {
 		log.Printf("Error fetching node by ID %d: %v", nodeID, err)
@@ -77,7 +88,7 @@ func (ns *nodeService) DeleteNode(ctx context.Context, nodeID uint64) (uint64, e
 }
 
 func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error {
-	node, err := ns.GetNodeByID(ctx, nodeID)
+	node, err := ns.GetNode(ctx, nodeID)
 	if err != nil {
 		return fmt.Errorf("node not found: %w", err)
 	}
@@ -89,6 +100,17 @@ func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64,
 		log.Printf("Error updating node last_updated: %v", err)
 		return fmt.Errorf("error updating node last_updated: %w", err)
 	}
-	log.Printf("Node last_updated updated successfully for nodeID: %d", nodeID)
+	log.Printf("Node last_updated successfully for nodeID %d to: %s", nodeID, lastUpdated.String())
 	return nil
+}
+
+func (ns *nodeService) CreateNode(ctx context.Context, fabricCode, description, nodeType string) (nodemodel.Node, error) {
+	lastUpdated := time.Now()
+	createdNode, err := ns.nodeRepository.CreateNode(ctx, fabricCode, description, nodeType, lastUpdated)
+	if err != nil {
+		log.Printf("Error creating node: %v", err)
+		return nodemodel.Node{}, fmt.Errorf("error creating node: %w", err)
+	}
+	log.Printf("Created node: %+v", createdNode)
+	return createdNode, nil
 }

@@ -17,7 +17,7 @@ type MeasurementServiceMock struct {
 	mock.Mock
 }
 
-func (m *MeasurementServiceMock) GetMeasurementsByNodeFabricCode(_ context.Context, fabricCode string) ([]measurementmodel.Measurement, error) {
+func (m *MeasurementServiceMock) GetMeasurementsByNode(_ context.Context, fabricCode string) ([]measurementmodel.Measurement, error) {
 	args := m.Called(fabricCode)
 	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
 }
@@ -86,7 +86,7 @@ func TestGetMeasurementsByNodeID(t *testing.T) {
 			name: "valid fabricCode, no measurements found",
 			in:   input{fabricCode: "abcd"},
 			on: func(df *depFields) {
-				df.service.On("GetMeasurementsByNodeFabricCode", "abcd").Return([]measurementmodel.Measurement{}, nil)
+				df.service.On("GetMeasurementsByNode", "abcd").Return([]measurementmodel.Measurement{}, nil)
 			},
 			assert: func(t *testing.T, out *output) {
 				assert.Equal(t, http.StatusOK, out.response.StatusCode)
@@ -96,7 +96,7 @@ func TestGetMeasurementsByNodeID(t *testing.T) {
 			name: "valid fabricCode, measurements found",
 			in:   input{fabricCode: "abcd"},
 			on: func(df *depFields) {
-				df.service.On("GetMeasurementsByNodeFabricCode", "abcd").Return(expectedMeasurements, nil)
+				df.service.On("GetMeasurementsByNode", "abcd").Return(expectedMeasurements, nil)
 			},
 			assert: func(t *testing.T, out *output) {
 				assert.Equal(t, http.StatusOK, out.response.StatusCode)
@@ -118,7 +118,7 @@ func TestGetMeasurementsByNodeID(t *testing.T) {
 			tt.on(f)
 
 			// When
-			handler.GetMeasurementsByNodeFabricCode(writer, req)
+			handler.GetMeasurementsByNode(writer, req)
 			response := writer.Result()
 
 			// Then

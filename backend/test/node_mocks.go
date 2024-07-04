@@ -16,7 +16,7 @@ func (ns *NodeServiceMock) GetNodes(ctx context.Context) ([]node.Node, error) {
 	panic("implement me")
 }
 
-func (ns *NodeServiceMock) GetNodeByID(_ context.Context, nodeID uint64) (node.Node, error) {
+func (ns *NodeServiceMock) GetNode(_ context.Context, nodeID uint64) (node.Node, error) {
 	args := ns.Called(nodeID)
 	n, _ := args.Get(0).(node.Node)
 	e, _ := args.Get(1).(error)
@@ -44,4 +44,9 @@ func (ns *NodeServiceMock) GetNodeIDByFabricCode(_ context.Context, fabricCode s
 	nodeID, _ := args.Get(0).(uint64)
 	e, _ := args.Get(1).(error)
 	return nodeID, e
+}
+
+func (ns *NodeServiceMock) GetNodeByFabricCode(ctx context.Context, fabricCode string) (node.Node, error) {
+	//TODO implement me
+	panic("implement me")
 }

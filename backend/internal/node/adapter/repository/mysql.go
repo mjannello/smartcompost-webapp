@@ -13,6 +13,7 @@ const (
 	GetAllNodesQuery           = "SELECT id, fabric_code, description, type, last_updated FROM nodes"
 	GetNodeByIDQuery           = "SELECT id, fabric_code, description, type, last_updated FROM nodes WHERE id = ?"
 	GetNodeIDByFabricCodeQuery = "SELECT id FROM nodes WHERE fabric_code = ?"
+	CreateNodeQuery            = "INSERT INTO nodes (fabric_code, description, type, last_updated) VALUES (?, ?, ?, ?)"
 	UpdateNodeQuery            = "UPDATE nodes SET description = ?, type = ?, last_updated = ? WHERE id = ?"
 	DeleteNodeQuery            = "DELETE FROM nodes WHERE id = ?"
 )
@@ -124,6 +125,37 @@ func (m *mySQL) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node,
 	}
 
 	return n, nil
+}
+
+func (m *mySQL) CreateNode(ctx context.Context, fabricCode, description, nodeType string, lastUpdated time.Time) (nodemodel.Node, error) {
+	tx, err := m.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nodemodel.Node{}, fmt.Errorf("could not begin transaction: %w", err)
+	}
+
+	result, err := tx.ExecContext(ctx, CreateNodeQuery, fabricCode, description, nodeType, lastUpdated.Format("2006-01-02 15:04:05"))
+	if err != nil {
+		_ = tx.Rollback()
+		return nodemodel.Node{}, fmt.Errorf("could not create node: %w", err)
+	}
+
+	nodeID, err := result.LastInsertId()
+	if err != nil {
+		_ = tx.Rollback()
+		return nodemodel.Node{}, fmt.Errorf("could not get last insert ID: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nodemodel.Node{}, fmt.Errorf("could not commit transaction: %w", err)
+	}
+
+	return nodemodel.Node{
+		ID:          uint64(nodeID),
+		FabricCode:  fabricCode,
+		Description: description,
+		Type:        nodeType,
+		LastUpdated: lastUpdated,
+	}, nil
 }
 
 func (m *mySQL) UpdateNode(ctx context.Context, n nodemodel.Node) (nodemodel.Node, error) {

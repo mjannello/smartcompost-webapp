@@ -15,6 +15,7 @@ import (
 type Handler interface {
 	GetNodes(w http.ResponseWriter, r *http.Request)
 	GetNodeByID(w http.ResponseWriter, r *http.Request)
+	CreateNode(w http.ResponseWriter, r *http.Request)
 	UpdateNode(w http.ResponseWriter, r *http.Request)
 	DeleteNode(w http.ResponseWriter, r *http.Request)
 }
@@ -27,6 +28,12 @@ func NewNodeHandler(nodeService nodeapp.NodeService) Handler {
 	return &handler{
 		nodeService: nodeService,
 	}
+}
+
+type CreateNodeRequest struct {
+	FabricCode  string `json:"fabric_code"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
 }
 
 func (h *handler) GetNodes(w http.ResponseWriter, r *http.Request) {
@@ -62,27 +69,54 @@ func (h *handler) GetNodeByID(w http.ResponseWriter, r *http.Request) {
 	nodeIDStr := vars["nodeID"]
 	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
 	if err != nil {
-		log.Println("[Handler] GetNodeByID - Invalid nodeID")
+		log.Println("[Handler] GetNode - Invalid nodeID")
 		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
 		return
 	}
 
 	ctx := r.Context()
-	node, err := h.nodeService.GetNodeByID(ctx, nodeID)
+	node, err := h.nodeService.GetNode(ctx, nodeID)
 	if err != nil {
-		log.Printf("[Handler] GetNodeByID - Error getting node: %s", err.Error())
+		log.Printf("[Handler] GetNode - Error getting node: %s", err.Error())
 		http.Error(w, "Error getting node", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(node); err != nil {
-		log.Printf("[Handler] GetNodeByID - Error encoding response: %s", err.Error())
+		log.Printf("[Handler] GetNode - Error encoding response: %s", err.Error())
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("[Handler] GetNodeByID - Node fetched successfully. ID: %d", nodeID)
+	log.Printf("[Handler] GetNode - Node fetched successfully. ID: %d", nodeID)
+}
+
+func (h *handler) CreateNode(w http.ResponseWriter, r *http.Request) {
+	var createNodeReq CreateNodeRequest
+	if err := json.NewDecoder(r.Body).Decode(&createNodeReq); err != nil {
+		log.Printf("[Handler] CreateNode - Invalid request body: %s", err.Error())
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+	node, err := h.nodeService.CreateNode(ctx, createNodeReq.FabricCode, createNodeReq.Description, createNodeReq.Type)
+	if err != nil {
+		log.Printf("[Handler] CreateNode - Error creating node: %s", err.Error())
+		http.Error(w, "Error creating node", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(node); err != nil {
+		log.Printf("[Handler] CreateNode - Error encoding response: %s", err.Error())
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("[Handler] CreateNode - Node created successfully. ID: %d", node.ID)
 }
 
 func (h *handler) UpdateNode(w http.ResponseWriter, r *http.Request) {
