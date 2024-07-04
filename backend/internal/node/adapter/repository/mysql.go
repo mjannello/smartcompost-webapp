@@ -16,6 +16,7 @@ const (
 	CreateNodeQuery            = "INSERT INTO nodes (fabric_code, description, type, last_updated) VALUES (?, ?, ?, ?)"
 	UpdateNodeQuery            = "UPDATE nodes SET description = ?, type = ?, last_updated = ? WHERE id = ?"
 	DeleteNodeQuery            = "DELETE FROM nodes WHERE id = ?"
+	CheckFabricCodeExistsQuery = "SELECT COUNT(*) FROM nodes WHERE fabric_code = ?"
 )
 
 type mySQL struct {
@@ -131,6 +132,17 @@ func (m *mySQL) CreateNode(ctx context.Context, fabricCode, description, nodeTyp
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nodemodel.Node{}, fmt.Errorf("could not begin transaction: %w", err)
+	}
+
+	var count int
+	row := tx.QueryRowContext(ctx, CheckFabricCodeExistsQuery, fabricCode)
+	if err := row.Scan(&count); err != nil {
+		_ = tx.Rollback()
+		return nodemodel.Node{}, fmt.Errorf("could not check fabric code existence: %w", err)
+	}
+	if count > 0 {
+		_ = tx.Rollback()
+		return nodemodel.Node{}, fmt.Errorf("fabric code already exists")
 	}
 
 	result, err := tx.ExecContext(ctx, CreateNodeQuery, fabricCode, description, nodeType, lastUpdated.Format("2006-01-02 15:04:05"))

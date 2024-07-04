@@ -82,8 +82,10 @@ func (h *handler) GetNodeByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serializedNode := AppToRestNodeModel(node)
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(node); err != nil {
+	if err := json.NewEncoder(w).Encode(serializedNode); err != nil {
 		log.Printf("[Handler] GetNode - Error encoding response: %s", err.Error())
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return
@@ -108,9 +110,11 @@ func (h *handler) CreateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serializedNode := AppToRestNodeModel(node)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(node); err != nil {
+	if err := json.NewEncoder(w).Encode(serializedNode); err != nil {
 		log.Printf("[Handler] CreateNode - Error encoding response: %s", err.Error())
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return
@@ -196,6 +200,7 @@ func RestNodeModelToApp(nodeRestModel NodeRestModel) nodemodel.Node {
 func AppToRestNodeModel(n nodemodel.Node) NodeRestModel {
 	return NodeRestModel{
 		ID:          n.ID,
+		FabricCode:  n.FabricCode,
 		Description: n.Description,
 		Type:        n.Type,
 		LastUpdated: n.LastUpdated,

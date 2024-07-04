@@ -42,7 +42,7 @@ func (h *handler) GetMeasurementsByNode(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var serializedMeasurements []NodeMeasurementModel
+	var serializedMeasurements []NodeMeasurementRestModel
 	for _, m := range measurements {
 		serializedMeasurement := AppToRestNodeMeasurementModel(m)
 		serializedMeasurements = append(serializedMeasurements, serializedMeasurement)
@@ -231,8 +231,8 @@ func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler] AddMeasurement - Measurements added successfully")
 }
 
-func AppToNodeMeasurementsRestModel(measurements []measurementmodel.Measurement) []NodeMeasurementModel {
-	createdMeasurementRestModels := make([]NodeMeasurementModel, len(measurements))
+func AppToNodeMeasurementsRestModel(measurements []measurementmodel.Measurement) []NodeMeasurementRestModel {
+	createdMeasurementRestModels := make([]NodeMeasurementRestModel, len(measurements))
 	for i, m := range measurements {
 		createdMeasurementRestModels[i] = AppToRestNodeMeasurementModel(m)
 	}
@@ -240,8 +240,8 @@ func AppToNodeMeasurementsRestModel(measurements []measurementmodel.Measurement)
 
 }
 
-func AppToRestNodeMeasurementModel(measurement measurementmodel.Measurement) NodeMeasurementModel {
-	return NodeMeasurementModel{
+func AppToRestNodeMeasurementModel(measurement measurementmodel.Measurement) NodeMeasurementRestModel {
+	return NodeMeasurementRestModel{
 		Value:     measurement.Value,
 		Timestamp: measurement.Timestamp,
 		Type:      measurement.Type,
@@ -251,10 +251,10 @@ func AppToRestNodeMeasurementModel(measurement measurementmodel.Measurement) Nod
 func AppToRestMeasurementModel(m measurementmodel.Measurement) MeasurementRestModel {
 	restModel := MeasurementRestModel{
 		LastUpdated:      time.Now().UTC(),
-		NodeMeasurements: []NodeMeasurementModel{},
+		NodeMeasurements: []NodeMeasurementRestModel{},
 	}
 
-	nodeMeasurement := NodeMeasurementModel{
+	nodeMeasurement := NodeMeasurementRestModel{
 		Value:     m.Value,
 		Timestamp: m.Timestamp,
 		Type:      m.Type,
@@ -277,11 +277,11 @@ func RestMeasurementModelToApp(measurementRestModel MeasurementRestModel) []meas
 }
 
 type MeasurementRestModel struct {
-	LastUpdated      time.Time              `json:"last_updated"`
-	NodeMeasurements []NodeMeasurementModel `json:"node_measurements"`
+	LastUpdated      time.Time                  `json:"last_updated"`
+	NodeMeasurements []NodeMeasurementRestModel `json:"node_measurements"`
 }
 
-type NodeMeasurementModel struct {
+type NodeMeasurementRestModel struct {
 	Value     float64   `json:"value"`
 	Timestamp time.Time `json:"timestamp"`
 	Type      string    `json:"type"`
