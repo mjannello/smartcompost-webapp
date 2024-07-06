@@ -11,6 +11,11 @@ type NodeServiceMock struct {
 	mock.Mock
 }
 
+func (ns *NodeServiceMock) CreateNode(_ context.Context, fabricCode, description, nodeType string) (node.Node, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (ns *NodeServiceMock) GetNodes(ctx context.Context) ([]node.Node, error) {
 	//TODO implement me
 	panic("implement me")

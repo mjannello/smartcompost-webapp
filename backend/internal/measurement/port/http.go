@@ -14,7 +14,6 @@ import (
 
 type Handler interface {
 	GetMeasurementsByNode(w http.ResponseWriter, r *http.Request)
-	GetMeasurementByID(w http.ResponseWriter, r *http.Request)
 	UpdateMeasurement(w http.ResponseWriter, r *http.Request)
 	DeleteMeasurement(w http.ResponseWriter, r *http.Request)
 	AddMeasurement(w http.ResponseWriter, r *http.Request)
@@ -57,52 +56,6 @@ func (h *handler) GetMeasurementsByNode(w http.ResponseWriter, r *http.Request) 
 	}
 
 	log.Printf("[Handler] GetMeasurementsByNode - Measurements fetched successfully for Node with Fabric Code: %s", fabricCode)
-}
-
-func (h *handler) GetMeasurementByID(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	nodeIDStr := vars["nodeID"]
-	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
-	if err != nil {
-		log.Println("[Handler] GetMeasurementByID - Invalid nodeID")
-		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
-		return
-	}
-
-	measurementIDStr := vars["measurementID"]
-	measurementID, err := strconv.ParseUint(measurementIDStr, 10, 64)
-	if err != nil {
-		log.Println("[Handler] GetMeasurementByID - Invalid measurementID")
-		http.Error(w, "Invalid measurementID", http.StatusBadRequest)
-		return
-	}
-
-	ctx := r.Context()
-
-	// Obtain the measurement from the service
-	measurement, err := h.measurementService.GetMeasurementByID(ctx, measurementID)
-	if err != nil {
-		log.Printf("[Handler] GetMeasurementByID - Error getting measurement: %s", err.Error())
-		http.Error(w, "Error getting measurement", http.StatusInternalServerError)
-		return
-	}
-
-	// Validate that the measurement belongs to the correct node
-	if measurement.NodeID != nodeID {
-		log.Println("[Handler] GetMeasurementByID - Measurement does not belong to the specified node")
-		http.Error(w, "Measurement does not belong to the specified node", http.StatusNotFound)
-		return
-	}
-
-	// Respond with the measurement
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(measurement); err != nil {
-		log.Printf("[Handler] GetMeasurementByID - Error encoding response: %s", err.Error())
-		http.Error(w, "Error encoding response", http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("[Handler] GetMeasurementByID - Measurement fetched successfully. ID: %d", measurementID)
 }
 
 func (h *handler) UpdateMeasurement(w http.ResponseWriter, r *http.Request) {
@@ -242,6 +195,7 @@ func AppToNodeMeasurementsRestModel(measurements []measurementmodel.Measurement)
 
 func AppToRestNodeMeasurementModel(measurement measurementmodel.Measurement) NodeMeasurementRestModel {
 	return NodeMeasurementRestModel{
+		ID:        measurement.ID,
 		Value:     measurement.Value,
 		Timestamp: measurement.Timestamp,
 		Type:      measurement.Type,
@@ -282,6 +236,7 @@ type MeasurementRestModel struct {
 }
 
 type NodeMeasurementRestModel struct {
+	ID        uint64    `json:"id"`
 	Value     float64   `json:"value"`
 	Timestamp time.Time `json:"timestamp"`
 	Type      string    `json:"type"`

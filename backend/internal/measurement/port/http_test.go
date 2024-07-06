@@ -32,18 +32,18 @@ func (m *MeasurementServiceMock) GetMeasurementByID(ctx context.Context, measure
 	return args.Get(0).(measurementmodel.Measurement), args.Error(1)
 }
 
-func (m *MeasurementServiceMock) UpdateMeasurement(ctx context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error) {
-	args := m.Called(ctx, measurement)
+func (m *MeasurementServiceMock) UpdateMeasurement(_ context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error) {
+	args := m.Called(measurement)
 	return args.Get(0).(measurementmodel.Measurement), args.Error(1)
 }
 
-func (m *MeasurementServiceMock) DeleteMeasurement(ctx context.Context, measurementID uint64) (uint64, error) {
-	args := m.Called(ctx, measurementID)
+func (m *MeasurementServiceMock) DeleteMeasurement(_ context.Context, measurementID uint64) (uint64, error) {
+	args := m.Called(measurementID)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-func (m *MeasurementServiceMock) AddNodeMeasurements(ctx context.Context, fabricCode string, measurements []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
-	args := m.Called(ctx, fabricCode, measurements)
+func (m *MeasurementServiceMock) AddNodeMeasurements(_ context.Context, fabricCode string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
+	args := m.Called(fabricCode, nodeLastUpdated, measurement)
 	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
 }
 
