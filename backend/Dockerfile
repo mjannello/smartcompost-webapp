@@ -9,6 +9,9 @@ RUN go mod download
 COPY . .
 COPY config/yml/config.yml /app/config/config.yml
 
+COPY scripts/wait-for-it.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/wait-for-it.sh
+
 RUN go build -o /app/smartcompost-webapp ./cmd
 
 EXPOSE 8080
