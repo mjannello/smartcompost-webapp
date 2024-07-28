@@ -15,6 +15,7 @@ type MeasurementService interface {
 	UpdateMeasurement(ctx context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error)
 	DeleteMeasurement(ctx context.Context, measurementID uint64) (uint64, error)
 	AddNodeMeasurements(ctx context.Context, fabricCode string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error)
+	UpdateAPLastUpdated(ctx context.Context, serialNumber string, nodeLastUpdated time.Time) error
 }
 
 type measurementService struct {
@@ -101,4 +102,16 @@ func (ms *measurementService) AddNodeMeasurements(ctx context.Context, fabricCod
 
 	log.Printf("Added measurements: %+v", createdMeasurements)
 	return createdMeasurements, nil
+}
+
+func (ms *measurementService) UpdateAPLastUpdated(ctx context.Context, serialNumber string, nodeLastUpdated time.Time) error {
+	nodeID, err := ms.nodeService.GetNodeIDByFabricCode(ctx, serialNumber)
+	if err != nil {
+		return fmt.Errorf("node not found: %w", err)
+	}
+	err = ms.nodeService.UpdateNodeLastUpdated(ctx, nodeID, nodeLastUpdated)
+	if err != nil {
+		return fmt.Errorf("error updating AP node last_updated: %w", err)
+	}
+	return nil
 }

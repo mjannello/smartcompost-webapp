@@ -47,6 +47,11 @@ func (m *MeasurementServiceMock) AddNodeMeasurements(_ context.Context, fabricCo
 	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
 }
 
+func (m *MeasurementServiceMock) UpdateAPLastUpdated(_ context.Context, serialNumber string, nodeLastUpdated time.Time) error {
+	args := m.Called(serialNumber, nodeLastUpdated)
+	return args.Error(0)
+}
+
 func TestGetMeasurementsByNodeID(t *testing.T) {
 	type input struct {
 		fabricCode string

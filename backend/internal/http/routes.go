@@ -35,11 +35,16 @@ func (r *routerHandler) RouteURLs(router *mux.Router) {
 	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.DeleteNode).Methods(http.MethodDelete)
 
 	// Measurements
-	measurementsPrefix := nodesPrefix + "/{fabricCode}/measurements"
+	measurementsSuffix := "/{fabricCode}/measurements"
+	measurementsPrefix := nodesPrefix + measurementsSuffix
 	router.HandleFunc(measurementsPrefix, r.measurementHandler.GetMeasurementsByNode).Methods(http.MethodGet)
 	//router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.GetMeasurementByID).Methods(http.MethodGet)
 	router.HandleFunc(measurementsPrefix, r.measurementHandler.AddMeasurement).Methods(http.MethodPost)
 	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.UpdateMeasurement).Methods(http.MethodPut)
 	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.DeleteMeasurement).Methods(http.MethodDelete)
 
+	// Access Point
+	accessPointPrefix := prefix + "/ap"
+	apMeasurementsPrefix := accessPointPrefix + measurementsSuffix
+	router.HandleFunc(apMeasurementsPrefix, r.measurementHandler.AddMeasurementAP).Methods(http.MethodPost)
 }
