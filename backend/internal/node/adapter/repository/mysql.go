@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	GetAllNodesQuery             = "SELECT id, serial_number, description, type, last_updated FROM nodes"
+	GetAllNodesQuery             = "SELECT id, serial_number, description, model, last_updated FROM nodes"
 	GetNodeByIDQuery             = "SELECT id, serial_number, description, type, last_updated FROM nodes WHERE id = ?"
 	GetNodeIDBySerialNumberQuery = "SELECT id FROM nodes WHERE serial_number = ?"
 	CreateNodeQuery              = "INSERT INTO nodes (serial_number, description, type, date_created, last_updated) VALUES (?, ?, ?, ?, NOW())"
@@ -68,7 +68,7 @@ func (m *mySQL) GetAllNodes(ctx context.Context) ([]nodemodel.Node, error) {
 	for rows.Next() {
 		var n nodemodel.Node
 		var lastUpdatedStr string
-		err = rows.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Type, &lastUpdatedStr)
+		err = rows.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Model, &lastUpdatedStr)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not scan node: %w", err)
@@ -105,7 +105,7 @@ func (m *mySQL) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node,
 	var n nodemodel.Node
 	var lastUpdatedStr string
 	row := tx.QueryRowContext(ctx, GetNodeByIDQuery, nodeID)
-	err = row.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Type, &lastUpdatedStr)
+	err = row.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Model, &lastUpdatedStr)
 	if err != nil {
 		_ = tx.Rollback()
 		if err == sql.ErrNoRows {
@@ -128,7 +128,7 @@ func (m *mySQL) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node,
 	return n, nil
 }
 
-func (m *mySQL) CreateNode(ctx context.Context, serialNumber, description, nodeType string, dateCreated time.Time) (nodemodel.Node, error) {
+func (m *mySQL) CreateNode(ctx context.Context, serialNumber, description, model string, dateCreated time.Time) (nodemodel.Node, error) {
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nodemodel.Node{}, fmt.Errorf("could not begin transaction: %w", err)
@@ -145,7 +145,7 @@ func (m *mySQL) CreateNode(ctx context.Context, serialNumber, description, nodeT
 		return nodemodel.Node{}, fmt.Errorf("serial number already exists")
 	}
 
-	result, err := tx.ExecContext(ctx, CreateNodeQuery, serialNumber, description, nodeType, dateCreated.Format("2006-01-02 15:04:05"))
+	result, err := tx.ExecContext(ctx, CreateNodeQuery, serialNumber, description, model, dateCreated.Format("2006-01-02 15:04:05"))
 	if err != nil {
 		_ = tx.Rollback()
 		return nodemodel.Node{}, fmt.Errorf("could not create node: %w", err)
@@ -165,7 +165,7 @@ func (m *mySQL) CreateNode(ctx context.Context, serialNumber, description, nodeT
 		ID:           uint64(nodeID),
 		SerialNumber: serialNumber,
 		Description:  description,
-		Type:         nodeType,
+		Model:        model,
 		LastUpdated:  dateCreated,
 	}, nil
 }
@@ -176,7 +176,7 @@ func (m *mySQL) UpdateNode(ctx context.Context, n nodemodel.Node) (nodemodel.Nod
 		return nodemodel.Node{}, fmt.Errorf("could not begin transaction: %w", err)
 	}
 
-	_, err = tx.ExecContext(ctx, UpdateNodeQuery, n.Description, n.Type, n.LastUpdated.Format("2006-01-02 15:04:05"), n.ID)
+	_, err = tx.ExecContext(ctx, UpdateNodeQuery, n.Description, n.Model, n.LastUpdated.Format("2006-01-02 15:04:05"), n.ID)
 	if err != nil {
 		_ = tx.Rollback()
 		return nodemodel.Node{}, fmt.Errorf("could not update node: %w", err)

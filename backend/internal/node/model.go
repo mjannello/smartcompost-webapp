@@ -10,7 +10,7 @@ type Node struct {
 	ID           uint64
 	SerialNumber string
 	Description  string
-	Type         string
+	Model        string
 	LastUpdated  time.Time
 	Measurements []measurement.Measurement
 }

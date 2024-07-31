@@ -13,7 +13,7 @@ type NodeService interface {
 	GetNodes(ctx context.Context) ([]nodemodel.Node, error)
 	GetNode(ctx context.Context, nodeID uint64) (nodemodel.Node, error)
 	GetNodeIDBySerialNumber(ctx context.Context, serialNumber string) (uint64, error)
-	CreateNode(ctx context.Context, serialNumber, description, nodeType string) (nodemodel.Node, error)
+	CreateNode(ctx context.Context, serialNumber, description, model string) (nodemodel.Node, error)
 	UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error)
 	UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error
 	DeleteNode(ctx context.Context, nodeID uint64) (uint64, error)
@@ -104,9 +104,9 @@ func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64,
 	return nil
 }
 
-func (ns *nodeService) CreateNode(ctx context.Context, serialNumber, description, nodeType string) (nodemodel.Node, error) {
+func (ns *nodeService) CreateNode(ctx context.Context, serialNumber, description, model string) (nodemodel.Node, error) {
 	dateCreated := time.Now()
-	createdNode, err := ns.nodeRepository.CreateNode(ctx, serialNumber, description, nodeType, dateCreated)
+	createdNode, err := ns.nodeRepository.CreateNode(ctx, serialNumber, description, model, dateCreated)
 	if err != nil {
 		log.Printf("Error creating node: %v", err)
 		return nodemodel.Node{}, fmt.Errorf("error creating node: %w", err)
