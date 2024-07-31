@@ -10,11 +10,11 @@ import (
 )
 
 type MeasurementService interface {
-	GetMeasurementsByNode(ctx context.Context, fabricCode string) ([]measurementmodel.Measurement, error)
+	GetMeasurementsByNode(ctx context.Context, serialNumber string) ([]measurementmodel.Measurement, error)
 	GetMeasurementByID(ctx context.Context, measurementID uint64) (measurementmodel.Measurement, error)
 	UpdateMeasurement(ctx context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error)
 	DeleteMeasurement(ctx context.Context, measurementID uint64) (uint64, error)
-	AddNodeMeasurements(ctx context.Context, fabricCode string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error)
+	AddNodeMeasurements(ctx context.Context, serialNumber string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error)
 	UpdateAPLastUpdated(ctx context.Context, serialNumber string, nodeLastUpdated time.Time) error
 }
 
@@ -30,10 +30,10 @@ func NewMeasurementService(mr measurementmodel.Repository, ns nodeapp.NodeServic
 	}
 }
 
-func (ms *measurementService) GetMeasurementsByNode(ctx context.Context, fabricCode string) ([]measurementmodel.Measurement, error) {
-	nodeID, err := ms.nodeService.GetNodeIDByFabricCode(ctx, fabricCode)
+func (ms *measurementService) GetMeasurementsByNode(ctx context.Context, serialNumber string) ([]measurementmodel.Measurement, error) {
+	nodeID, err := ms.nodeService.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
-		log.Printf("Error fetching nodeID by fabric code %s: %v", fabricCode, err)
+		log.Printf("Error fetching nodeID by serial number %s: %v", serialNumber, err)
 		return nil, fmt.Errorf("error getting nodeID: %w", err)
 	}
 	measurements, err := ms.measurementRepository.GetAllMeasurementsByNodeID(ctx, nodeID)
@@ -75,9 +75,9 @@ func (ms *measurementService) DeleteMeasurement(ctx context.Context, measurement
 	return deletedID, nil
 }
 
-func (ms *measurementService) AddNodeMeasurements(ctx context.Context, fabricCode string, nodeLastUpdated time.Time, measurements []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
+func (ms *measurementService) AddNodeMeasurements(ctx context.Context, serialNumber string, nodeLastUpdated time.Time, measurements []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
 	// Validate that the node exists
-	nodeID, err := ms.nodeService.GetNodeIDByFabricCode(ctx, fabricCode)
+	nodeID, err := ms.nodeService.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
 		return nil, fmt.Errorf("node not found: %w", err)
 	}
@@ -105,7 +105,7 @@ func (ms *measurementService) AddNodeMeasurements(ctx context.Context, fabricCod
 }
 
 func (ms *measurementService) UpdateAPLastUpdated(ctx context.Context, serialNumber string, nodeLastUpdated time.Time) error {
-	nodeID, err := ms.nodeService.GetNodeIDByFabricCode(ctx, serialNumber)
+	nodeID, err := ms.nodeService.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
 		return fmt.Errorf("node not found: %w", err)
 	}

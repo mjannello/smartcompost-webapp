@@ -10,13 +10,13 @@ import (
 )
 
 const (
-	GetAllNodesQuery           = "SELECT id, fabric_code, description, type, last_updated FROM nodes"
-	GetNodeByIDQuery           = "SELECT id, fabric_code, description, type, last_updated FROM nodes WHERE id = ?"
-	GetNodeIDByFabricCodeQuery = "SELECT id FROM nodes WHERE fabric_code = ?"
-	CreateNodeQuery            = "INSERT INTO nodes (fabric_code, description, type, last_updated) VALUES (?, ?, ?, ?)"
-	UpdateNodeQuery            = "UPDATE nodes SET description = ?, type = ?, last_updated = ? WHERE id = ?"
-	DeleteNodeQuery            = "DELETE FROM nodes WHERE id = ?"
-	CheckFabricCodeExistsQuery = "SELECT COUNT(*) FROM nodes WHERE fabric_code = ?"
+	GetAllNodesQuery             = "SELECT id, serial_number, description, type, last_updated FROM nodes"
+	GetNodeByIDQuery             = "SELECT id, serial_number, description, type, last_updated FROM nodes WHERE id = ?"
+	GetNodeIDBySerialNumberQuery = "SELECT id FROM nodes WHERE serial_number = ?"
+	CreateNodeQuery              = "INSERT INTO nodes (serial_number, description, type, date_created, last_updated) VALUES (?, ?, ?, ?, NOW())"
+	UpdateNodeQuery              = "UPDATE nodes SET description = ?, type = ?, last_updated = ? WHERE id = ?"
+	DeleteNodeQuery              = "DELETE FROM nodes WHERE id = ?"
+	CheckSerialNumberExistsQuery = "SELECT COUNT(*) FROM nodes WHERE serial_number = ?"
 )
 
 type mySQL struct {
@@ -27,14 +27,14 @@ func NewNodeRepository(db *sql.DB) nodemodel.Repository {
 	return &mySQL{db: db}
 }
 
-func (m *mySQL) GetNodeIDByFabricCode(ctx context.Context, fabricCode string) (uint64, error) {
+func (m *mySQL) GetNodeIDBySerialNumber(ctx context.Context, serialNumber string) (uint64, error) {
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, fmt.Errorf("could not begin transaction: %w", err)
 	}
 
 	var nodeID uint64
-	row := tx.QueryRowContext(ctx, GetNodeIDByFabricCodeQuery, fabricCode)
+	row := tx.QueryRowContext(ctx, GetNodeIDBySerialNumberQuery, serialNumber)
 	err = row.Scan(&nodeID)
 	if err != nil {
 		_ = tx.Rollback()
@@ -68,7 +68,7 @@ func (m *mySQL) GetAllNodes(ctx context.Context) ([]nodemodel.Node, error) {
 	for rows.Next() {
 		var n nodemodel.Node
 		var lastUpdatedStr string
-		err = rows.Scan(&n.ID, &n.FabricCode, &n.Description, &n.Type, &lastUpdatedStr)
+		err = rows.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Type, &lastUpdatedStr)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not scan node: %w", err)
@@ -105,7 +105,7 @@ func (m *mySQL) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node,
 	var n nodemodel.Node
 	var lastUpdatedStr string
 	row := tx.QueryRowContext(ctx, GetNodeByIDQuery, nodeID)
-	err = row.Scan(&n.ID, &n.FabricCode, &n.Description, &n.Type, &lastUpdatedStr)
+	err = row.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Type, &lastUpdatedStr)
 	if err != nil {
 		_ = tx.Rollback()
 		if err == sql.ErrNoRows {
@@ -128,24 +128,24 @@ func (m *mySQL) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node,
 	return n, nil
 }
 
-func (m *mySQL) CreateNode(ctx context.Context, fabricCode, description, nodeType string, lastUpdated time.Time) (nodemodel.Node, error) {
+func (m *mySQL) CreateNode(ctx context.Context, serialNumber, description, nodeType string, dateCreated time.Time) (nodemodel.Node, error) {
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nodemodel.Node{}, fmt.Errorf("could not begin transaction: %w", err)
 	}
 
 	var count int
-	row := tx.QueryRowContext(ctx, CheckFabricCodeExistsQuery, fabricCode)
+	row := tx.QueryRowContext(ctx, CheckSerialNumberExistsQuery, serialNumber)
 	if err := row.Scan(&count); err != nil {
 		_ = tx.Rollback()
-		return nodemodel.Node{}, fmt.Errorf("could not check fabric code existence: %w", err)
+		return nodemodel.Node{}, fmt.Errorf("could not check serial number existence: %w", err)
 	}
 	if count > 0 {
 		_ = tx.Rollback()
-		return nodemodel.Node{}, fmt.Errorf("fabric code already exists")
+		return nodemodel.Node{}, fmt.Errorf("serial number already exists")
 	}
 
-	result, err := tx.ExecContext(ctx, CreateNodeQuery, fabricCode, description, nodeType, lastUpdated.Format("2006-01-02 15:04:05"))
+	result, err := tx.ExecContext(ctx, CreateNodeQuery, serialNumber, description, nodeType, dateCreated.Format("2006-01-02 15:04:05"))
 	if err != nil {
 		_ = tx.Rollback()
 		return nodemodel.Node{}, fmt.Errorf("could not create node: %w", err)
@@ -162,11 +162,11 @@ func (m *mySQL) CreateNode(ctx context.Context, fabricCode, description, nodeTyp
 	}
 
 	return nodemodel.Node{
-		ID:          uint64(nodeID),
-		FabricCode:  fabricCode,
-		Description: description,
-		Type:        nodeType,
-		LastUpdated: lastUpdated,
+		ID:           uint64(nodeID),
+		SerialNumber: serialNumber,
+		Description:  description,
+		Type:         nodeType,
+		LastUpdated:  dateCreated,
 	}, nil
 }
 

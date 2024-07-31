@@ -18,7 +18,7 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 		nodeServiceMock           *test.NodeServiceMock
 	}
 	type input struct {
-		fabricCode string
+		serialNumber string
 	}
 	type output struct {
 		measurements []measurement.Measurement
@@ -39,9 +39,9 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 	}{
 		{
 			name: "get measurements by NodeID successfully",
-			in:   input{fabricCode: "ABCD"},
+			in:   input{serialNumber: "ABCD"},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDByFabricCode", "ABCD").Return(uint64(1), nil)
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "ABCD").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("GetAllMeasurementsByNodeID", uint64(1)).Return(expectedMeasurements, nil)
 			},
 			assert: func(t *testing.T, out *output) {
@@ -50,10 +50,10 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 			},
 		},
 		{
-			name: "error getting nodeID by fabric code",
-			in:   input{fabricCode: "ABCD"},
+			name: "error getting nodeID by serial number",
+			in:   input{serialNumber: "ABCD"},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDByFabricCode", "ABCD").Return(nil, fmt.Errorf("test"))
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "ABCD").Return(nil, fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
 				assert.Error(t, out.err)
@@ -63,9 +63,9 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 		},
 		{
 			name: "error getting measurements by NodeID",
-			in:   input{fabricCode: "ABCD"},
+			in:   input{serialNumber: "ABCD"},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDByFabricCode", "ABCD").Return(uint64(1), nil)
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "ABCD").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("GetAllMeasurementsByNodeID", uint64(1)).Return(nil, fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
@@ -87,7 +87,7 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 			tt.on(df)
 
 			// When
-			resultMeasurements, err := s.GetMeasurementsByNode(context.Background(), tt.in.fabricCode)
+			resultMeasurements, err := s.GetMeasurementsByNode(context.Background(), tt.in.serialNumber)
 
 			// Then
 			tt.assert(t, &output{resultMeasurements, err})
@@ -318,7 +318,7 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		nodeServiceMock           *test.NodeServiceMock
 	}
 	type input struct {
-		fabricCode   string
+		serialNumber string
 		lastUpdated  time.Time
 		measurements []measurement.Measurement
 	}
@@ -352,10 +352,10 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		assert func(*testing.T, *output)
 	}{
 		{
-			name: "add measurements by fabricCode successfully",
-			in:   input{fabricCode: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
+			name: "add measurements by serialNumber successfully",
+			in:   input{serialNumber: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], nil).Once()
 				df.nodeServiceMock.On("UpdateNodeLastUpdated", uint64(1), timeNow).Return(nil)
@@ -367,9 +367,9 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error getting node by ID",
-			in:   input{fabricCode: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
+			in:   input{serialNumber: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(0, fmt.Errorf("test"))
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "abcd").Return(0, fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
 				assert.Error(t, out.err)
@@ -379,9 +379,9 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error adding measurement",
-			in:   input{fabricCode: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
+			in:   input{serialNumber: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], fmt.Errorf("test"))
 			},
@@ -393,9 +393,9 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 		},
 		{
 			name: "error updating last updated time",
-			in:   input{fabricCode: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
+			in:   input{serialNumber: "abcd", lastUpdated: timeNow, measurements: expectedMeasurements},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDByFabricCode", "abcd").Return(uint64(1), nil)
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "abcd").Return(uint64(1), nil)
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[0]).Return(expectedMeasurements[0], nil).Once()
 				df.measurementRepositoryMock.On("AddMeasurement", expectedMeasurements[1]).Return(expectedMeasurements[1], nil).Once()
 				df.nodeServiceMock.On("UpdateNodeLastUpdated", uint64(1), timeNow).Return(fmt.Errorf("test"))
@@ -419,7 +419,7 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 			tt.on(df)
 
 			// When
-			resultMeasurements, err := s.AddNodeMeasurements(context.Background(), tt.in.fabricCode, tt.in.lastUpdated, tt.in.measurements)
+			resultMeasurements, err := s.AddNodeMeasurements(context.Background(), tt.in.serialNumber, tt.in.lastUpdated, tt.in.measurements)
 
 			// Then
 			tt.assert(t, &output{resultMeasurements, err})

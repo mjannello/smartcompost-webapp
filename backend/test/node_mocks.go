@@ -11,7 +11,7 @@ type NodeServiceMock struct {
 	mock.Mock
 }
 
-func (ns *NodeServiceMock) CreateNode(_ context.Context, fabricCode, description, nodeType string) (node.Node, error) {
+func (ns *NodeServiceMock) CreateNode(_ context.Context, serialNumber, description, nodeType string) (node.Node, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -44,14 +44,14 @@ func (ns *NodeServiceMock) DeleteNode(ctx context.Context, nodeID uint64) (uint6
 	panic("implement me")
 }
 
-func (ns *NodeServiceMock) GetNodeIDByFabricCode(_ context.Context, fabricCode string) (uint64, error) {
-	args := ns.Called(fabricCode)
+func (ns *NodeServiceMock) GetNodeIDBySerialNumber(_ context.Context, serialNumber string) (uint64, error) {
+	args := ns.Called(serialNumber)
 	nodeID, _ := args.Get(0).(uint64)
 	e, _ := args.Get(1).(error)
 	return nodeID, e
 }
 
-func (ns *NodeServiceMock) GetNodeByFabricCode(ctx context.Context, fabricCode string) (node.Node, error) {
+func (ns *NodeServiceMock) GetNodeBySerialNumber(ctx context.Context, serialNumber string) (node.Node, error) {
 	//TODO implement me
 	panic("implement me")
 }

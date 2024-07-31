@@ -31,9 +31,9 @@ func NewNodeHandler(nodeService nodeapp.NodeService) Handler {
 }
 
 type CreateNodeRequest struct {
-	FabricCode  string `json:"fabric_code"`
-	Description string `json:"description"`
-	Type        string `json:"type"`
+	SerialNumber string `json:"serial_number"`
+	Description  string `json:"description"`
+	Type         string `json:"type"`
 }
 
 func (h *handler) GetNodes(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,7 @@ func (h *handler) CreateNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	node, err := h.nodeService.CreateNode(ctx, createNodeReq.FabricCode, createNodeReq.Description, createNodeReq.Type)
+	node, err := h.nodeService.CreateNode(ctx, createNodeReq.SerialNumber, createNodeReq.Description, createNodeReq.Type)
 	if err != nil {
 		log.Printf("[Handler] CreateNode - Error creating node: %s", err.Error())
 		http.Error(w, "Error creating node", http.StatusInternalServerError)
@@ -179,7 +179,7 @@ func (h *handler) DeleteNode(w http.ResponseWriter, r *http.Request) {
 
 type NodeRestModel struct {
 	ID           uint64      `json:"id"`
-	FabricCode   string      `json:"fabric_code"`
+	SerialNumber string      `json:"serial_number"`
 	Description  string      `json:"description"`
 	Type         string      `json:"type"`
 	LastUpdated  time.Time   `json:"last_updated"`
@@ -188,21 +188,21 @@ type NodeRestModel struct {
 
 func RestNodeModelToApp(nodeRestModel NodeRestModel) nodemodel.Node {
 	return nodemodel.Node{
-		ID:          nodeRestModel.ID,
-		FabricCode:  nodeRestModel.FabricCode,
-		Description: nodeRestModel.Description,
-		Type:        nodeRestModel.Type,
-		LastUpdated: nodeRestModel.LastUpdated,
+		ID:           nodeRestModel.ID,
+		SerialNumber: nodeRestModel.SerialNumber,
+		Description:  nodeRestModel.Description,
+		Type:         nodeRestModel.Type,
+		LastUpdated:  nodeRestModel.LastUpdated,
 	}
 
 }
 
 func AppToRestNodeModel(n nodemodel.Node) NodeRestModel {
 	return NodeRestModel{
-		ID:          n.ID,
-		FabricCode:  n.FabricCode,
-		Description: n.Description,
-		Type:        n.Type,
-		LastUpdated: n.LastUpdated,
+		ID:           n.ID,
+		SerialNumber: n.SerialNumber,
+		Description:  n.Description,
+		Type:         n.Type,
+		LastUpdated:  n.LastUpdated,
 	}
 }

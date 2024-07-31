@@ -17,8 +17,8 @@ type MeasurementServiceMock struct {
 	mock.Mock
 }
 
-func (m *MeasurementServiceMock) GetMeasurementsByNode(_ context.Context, fabricCode string) ([]measurementmodel.Measurement, error) {
-	args := m.Called(fabricCode)
+func (m *MeasurementServiceMock) GetMeasurementsByNode(_ context.Context, serialNumber string) ([]measurementmodel.Measurement, error) {
+	args := m.Called(serialNumber)
 	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
 }
 
@@ -42,8 +42,8 @@ func (m *MeasurementServiceMock) DeleteMeasurement(_ context.Context, measuremen
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-func (m *MeasurementServiceMock) AddNodeMeasurements(_ context.Context, fabricCode string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
-	args := m.Called(fabricCode, nodeLastUpdated, measurement)
+func (m *MeasurementServiceMock) AddNodeMeasurements(_ context.Context, serialNumber string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
+	args := m.Called(serialNumber, nodeLastUpdated, measurement)
 	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
 }
 
@@ -54,7 +54,7 @@ func (m *MeasurementServiceMock) UpdateAPLastUpdated(_ context.Context, serialNu
 
 func TestGetMeasurementsByNodeID(t *testing.T) {
 	type input struct {
-		fabricCode string
+		serialNumber string
 	}
 	type output struct {
 		response *http.Response
@@ -88,8 +88,8 @@ func TestGetMeasurementsByNodeID(t *testing.T) {
 		assert func(*testing.T, *output)
 	}{
 		{
-			name: "valid fabricCode, no measurements found",
-			in:   input{fabricCode: "abcd"},
+			name: "valid serialNumber, no measurements found",
+			in:   input{serialNumber: "abcd"},
 			on: func(df *depFields) {
 				df.service.On("GetMeasurementsByNode", "abcd").Return([]measurementmodel.Measurement{}, nil)
 			},
@@ -98,8 +98,8 @@ func TestGetMeasurementsByNodeID(t *testing.T) {
 			},
 		},
 		{
-			name: "valid fabricCode, measurements found",
-			in:   input{fabricCode: "abcd"},
+			name: "valid serialNumber, measurements found",
+			in:   input{serialNumber: "abcd"},
 			on: func(df *depFields) {
 				df.service.On("GetMeasurementsByNode", "abcd").Return(expectedMeasurements, nil)
 			},
@@ -116,7 +116,7 @@ func TestGetMeasurementsByNodeID(t *testing.T) {
 			handler := port.NewMeasurementHandler(&measurementService)
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:8080/test", nil)
-			req = mux.SetURLVars(req, map[string]string{"fabricCode": tt.in.fabricCode})
+			req = mux.SetURLVars(req, map[string]string{"serialNumber": tt.in.serialNumber})
 
 			writer := httptest.NewRecorder()
 			f := &depFields{service: &measurementService}

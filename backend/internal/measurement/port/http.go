@@ -32,10 +32,10 @@ func NewMeasurementHandler(measurementService measurementapp.MeasurementService)
 
 func (h *handler) GetMeasurementsByNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	fabricCode := vars["fabricCode"]
+	serialNumber := vars["serialNumber"]
 
 	ctx := r.Context()
-	measurements, err := h.measurementService.GetMeasurementsByNode(ctx, fabricCode)
+	measurements, err := h.measurementService.GetMeasurementsByNode(ctx, serialNumber)
 	if err != nil {
 		log.Printf("[Handler] GetMeasurementsByNode - Error getting measurements: %s", err.Error())
 		http.Error(w, "Error getting measurements", http.StatusInternalServerError)
@@ -56,7 +56,7 @@ func (h *handler) GetMeasurementsByNode(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	log.Printf("[Handler] GetMeasurementsByNode - Measurements fetched successfully for Node with Fabric Code: %s", fabricCode)
+	log.Printf("[Handler] GetMeasurementsByNode - Measurements fetched successfully for Node with Serial Number: %s", serialNumber)
 }
 
 func (h *handler) UpdateMeasurement(w http.ResponseWriter, r *http.Request) {
@@ -144,10 +144,10 @@ func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 	// Extract nodeID from URI params
 	vars := mux.Vars(r)
-	fabricCode, ok := vars["fabricCode"]
+	serialNumber, ok := vars["serialNumber"]
 	if !ok {
-		log.Printf("[Handler] AddMeasurement - fabricCode not provided in URI")
-		http.Error(w, "fabricCode not provided", http.StatusBadRequest)
+		log.Printf("[Handler] AddMeasurement - serialNumber not provided in URI")
+		http.Error(w, "serialNumber not provided", http.StatusBadRequest)
 		return
 	}
 
@@ -164,7 +164,7 @@ func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 
 	// Add measurements to the node
 	ctx := r.Context()
-	createdMeasurements, err := h.measurementService.AddNodeMeasurements(ctx, fabricCode, measurementRest.LastUpdated, measurements)
+	createdMeasurements, err := h.measurementService.AddNodeMeasurements(ctx, serialNumber, measurementRest.LastUpdated, measurements)
 	if err != nil {
 		log.Printf("[Handler] AddMeasurement - Error adding measurements: %s", err.Error())
 		http.Error(w, "Error adding measurements", http.StatusInternalServerError)
@@ -188,10 +188,10 @@ func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 func (h *handler) AddMeasurementAP(w http.ResponseWriter, r *http.Request) {
 	// Extract nodeID from URI params
 	vars := mux.Vars(r)
-	fabricCode, ok := vars["fabricCode"]
+	serialNumber, ok := vars["serialNumber"]
 	if !ok {
-		log.Printf("[Handler] AddMeasurementAP - fabricCode not provided in URI")
-		http.Error(w, "fabricCode not provided", http.StatusBadRequest)
+		log.Printf("[Handler] AddMeasurementAP - serialNumber not provided in URI")
+		http.Error(w, "serialNumber not provided", http.StatusBadRequest)
 		return
 	}
 
@@ -229,9 +229,9 @@ func (h *handler) AddMeasurementAP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("[Handler] AddMeasurementAP - Measurements added successfully")
 
-	err := h.measurementService.UpdateAPLastUpdated(ctx, fabricCode, nodesMeasurementsRest.LastUpdated)
+	err := h.measurementService.UpdateAPLastUpdated(ctx, serialNumber, nodesMeasurementsRest.LastUpdated)
 	if err != nil {
-		log.Printf("[Handler] AddMeasurementAP - Error updating last updated for node %s: %s", fabricCode, err.Error())
+		log.Printf("[Handler] AddMeasurementAP - Error updating last updated for node %s: %s", serialNumber, err.Error())
 		return
 	}
 }

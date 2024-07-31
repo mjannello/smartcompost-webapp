@@ -12,12 +12,12 @@ import (
 type NodeService interface {
 	GetNodes(ctx context.Context) ([]nodemodel.Node, error)
 	GetNode(ctx context.Context, nodeID uint64) (nodemodel.Node, error)
-	GetNodeIDByFabricCode(ctx context.Context, fabricCode string) (uint64, error)
-	CreateNode(ctx context.Context, fabricCode, description, nodeType string) (nodemodel.Node, error)
+	GetNodeIDBySerialNumber(ctx context.Context, serialNumber string) (uint64, error)
+	CreateNode(ctx context.Context, serialNumber, description, nodeType string) (nodemodel.Node, error)
 	UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error)
 	UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error
 	DeleteNode(ctx context.Context, nodeID uint64) (uint64, error)
-	GetNodeByFabricCode(ctx context.Context, fabricCode string) (nodemodel.Node, error)
+	GetNodeBySerialNumber(ctx context.Context, serialNumber string) (nodemodel.Node, error)
 }
 
 type nodeService struct {
@@ -28,8 +28,8 @@ func NewNodeService(repository nodemodel.Repository) NodeService {
 	return &nodeService{nodeRepository: repository}
 }
 
-func (ns *nodeService) GetNodeIDByFabricCode(ctx context.Context, fabricCode string) (uint64, error) {
-	nodeID, err := ns.nodeRepository.GetNodeIDByFabricCode(ctx, fabricCode)
+func (ns *nodeService) GetNodeIDBySerialNumber(ctx context.Context, serialNumber string) (uint64, error) {
+	nodeID, err := ns.nodeRepository.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
 		log.Printf("Error fetching nodeID: %v", err)
 		return 0, fmt.Errorf("error getting nodeID: %w", err)
@@ -48,10 +48,10 @@ func (ns *nodeService) GetNodes(ctx context.Context) ([]nodemodel.Node, error) {
 	return nodes, nil
 }
 
-func (ns *nodeService) GetNodeByFabricCode(ctx context.Context, fabricCode string) (nodemodel.Node, error) {
-	nodeID, err := ns.GetNodeIDByFabricCode(ctx, fabricCode)
+func (ns *nodeService) GetNodeBySerialNumber(ctx context.Context, serialNumber string) (nodemodel.Node, error) {
+	nodeID, err := ns.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
-		log.Printf("Error fetching nodeID by fabric code %s: %v", fabricCode, err)
+		log.Printf("Error fetching nodeID by serial number %s: %v", serialNumber, err)
 		return nodemodel.Node{}, fmt.Errorf("error getting nodeID: %w", err)
 	}
 	return ns.GetNode(ctx, nodeID)
@@ -104,9 +104,9 @@ func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64,
 	return nil
 }
 
-func (ns *nodeService) CreateNode(ctx context.Context, fabricCode, description, nodeType string) (nodemodel.Node, error) {
-	lastUpdated := time.Now()
-	createdNode, err := ns.nodeRepository.CreateNode(ctx, fabricCode, description, nodeType, lastUpdated)
+func (ns *nodeService) CreateNode(ctx context.Context, serialNumber, description, nodeType string) (nodemodel.Node, error) {
+	dateCreated := time.Now()
+	createdNode, err := ns.nodeRepository.CreateNode(ctx, serialNumber, description, nodeType, dateCreated)
 	if err != nil {
 		log.Printf("Error creating node: %v", err)
 		return nodemodel.Node{}, fmt.Errorf("error creating node: %w", err)
