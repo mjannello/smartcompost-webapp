@@ -37,8 +37,8 @@ func (m *MeasurementServiceMock) UpdateMeasurement(_ context.Context, measuremen
 	return args.Get(0).(measurementmodel.Measurement), args.Error(1)
 }
 
-func (m *MeasurementServiceMock) DeleteMeasurement(_ context.Context, measurementID uint64) (uint64, error) {
-	args := m.Called(measurementID)
+func (m *MeasurementServiceMock) DeleteMeasurement(_ context.Context, measurement measurementmodel.Measurement, serialNumber string) (uint64, error) {
+	args := m.Called(measurement, serialNumber)
 	return args.Get(0).(uint64), args.Error(1)
 }
 

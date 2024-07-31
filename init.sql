@@ -4,9 +4,9 @@ DROP TABLE IF EXISTS nodes;
 
 CREATE TABLE IF NOT EXISTS nodes (
                                      id INT AUTO_INCREMENT PRIMARY KEY,
-                                     serial_number VARCHAR(255) NOT NULL,
+                                     serial_number CHAR(36) NOT NULL,
                                      description VARCHAR(255) NOT NULL,
-                                     type VARCHAR(255),
+                                     model VARCHAR(255),
                                      date_created TIMESTAMP,
                                      last_updated TIMESTAMP
 );
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS measurements (
 );
 
 
-INSERT INTO nodes (serial_number, description, type, date_created, last_updated) VALUES ('ABCD123','Node 1', 'WEB', NOW(), NOW()), ('DEFG0246','Node 2', 'Type B', NOW(), NOW());
+INSERT INTO nodes (serial_number, description, model, date_created, last_updated) VALUES (UUID(),'Node 1', 'WEB', NOW(), NOW()), (UUID(),'Node 2', 'Type B', NOW(), NOW());
 
 INSERT INTO measurements (node_id, value, timestamp, type) VALUES (1, 10.5, '2024-06-14 12:30:45', 'humidity');
 INSERT INTO measurements (node_id, value, timestamp, type) VALUES (1, 15.3, '2024-06-14 12:35:21', 'temperature');

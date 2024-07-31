@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	GetAllNodesQuery             = "SELECT id, serial_number, description, model, last_updated FROM nodes"
-	GetNodeByIDQuery             = "SELECT id, serial_number, description, type, last_updated FROM nodes WHERE id = ?"
+	GetAllNodesQuery             = "SELECT id, serial_number, description, model, date_created, last_updated FROM nodes"
+	GetNodeByIDQuery             = "SELECT id, serial_number, description, model, date_created,  last_updated FROM nodes WHERE id = ?"
 	GetNodeIDBySerialNumberQuery = "SELECT id FROM nodes WHERE serial_number = ?"
-	CreateNodeQuery              = "INSERT INTO nodes (serial_number, description, type, date_created, last_updated) VALUES (?, ?, ?, ?, NOW())"
-	UpdateNodeQuery              = "UPDATE nodes SET description = ?, type = ?, last_updated = ? WHERE id = ?"
+	CreateNodeQuery              = "INSERT INTO nodes (serial_number, description, model, date_created, last_updated) VALUES (?, ?, ?, ?, ?)"
+	UpdateNodeQuery              = "UPDATE nodes SET description = ?, model = ?, last_updated = ? WHERE id = ?"
 	DeleteNodeQuery              = "DELETE FROM nodes WHERE id = ?"
 	CheckSerialNumberExistsQuery = "SELECT COUNT(*) FROM nodes WHERE serial_number = ?"
 )
@@ -67,12 +67,19 @@ func (m *mySQL) GetAllNodes(ctx context.Context) ([]nodemodel.Node, error) {
 	var nodes []nodemodel.Node
 	for rows.Next() {
 		var n nodemodel.Node
-		var lastUpdatedStr string
-		err = rows.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Model, &lastUpdatedStr)
+		var dateCreatedStr, lastUpdatedStr string
+		err = rows.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Model, &dateCreatedStr, &lastUpdatedStr)
 		if err != nil {
 			_ = tx.Rollback()
 			return nil, fmt.Errorf("could not scan node: %w", err)
 		}
+
+		dateCreated, err := time.Parse("2006-01-02 15:04:05", dateCreatedStr)
+		if err != nil {
+			_ = tx.Rollback()
+			return nil, fmt.Errorf("could not parse date_created: %w", err)
+		}
+		n.DateCreated = dateCreated
 
 		lastUpdated, err := time.Parse("2006-01-02 15:04:05", lastUpdatedStr)
 		if err != nil {
@@ -103,9 +110,9 @@ func (m *mySQL) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node,
 	}
 
 	var n nodemodel.Node
-	var lastUpdatedStr string
+	var dateCreatedStr, lastUpdatedStr string
 	row := tx.QueryRowContext(ctx, GetNodeByIDQuery, nodeID)
-	err = row.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Model, &lastUpdatedStr)
+	err = row.Scan(&n.ID, &n.SerialNumber, &n.Description, &n.Model, &dateCreatedStr, &lastUpdatedStr)
 	if err != nil {
 		_ = tx.Rollback()
 		if err == sql.ErrNoRows {
@@ -113,6 +120,13 @@ func (m *mySQL) GetNodeByID(ctx context.Context, nodeID uint64) (nodemodel.Node,
 		}
 		return n, fmt.Errorf("could not scan node: %w", err)
 	}
+
+	dateCreated, err := time.Parse("2006-01-02 15:04:05", dateCreatedStr)
+	if err != nil {
+		_ = tx.Rollback()
+		return n, fmt.Errorf("could not parse date_created: %w", err)
+	}
+	n.DateCreated = dateCreated
 
 	lastUpdated, err := time.Parse("2006-01-02 15:04:05", lastUpdatedStr)
 	if err != nil {
@@ -144,8 +158,8 @@ func (m *mySQL) CreateNode(ctx context.Context, serialNumber, description, model
 		_ = tx.Rollback()
 		return nodemodel.Node{}, fmt.Errorf("serial number already exists")
 	}
-
-	result, err := tx.ExecContext(ctx, CreateNodeQuery, serialNumber, description, model, dateCreated.Format("2006-01-02 15:04:05"))
+	now := dateCreated.Format("2006-01-02 15:04:05")
+	result, err := tx.ExecContext(ctx, CreateNodeQuery, serialNumber, description, model, now, now)
 	if err != nil {
 		_ = tx.Rollback()
 		return nodemodel.Node{}, fmt.Errorf("could not create node: %w", err)
@@ -166,17 +180,18 @@ func (m *mySQL) CreateNode(ctx context.Context, serialNumber, description, model
 		SerialNumber: serialNumber,
 		Description:  description,
 		Model:        model,
+		DateCreated:  dateCreated,
 		LastUpdated:  dateCreated,
 	}, nil
 }
 
-func (m *mySQL) UpdateNode(ctx context.Context, n nodemodel.Node) (nodemodel.Node, error) {
+func (m *mySQL) UpdateNode(ctx context.Context, n nodemodel.Node, lastUpdated time.Time) (nodemodel.Node, error) {
 	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nodemodel.Node{}, fmt.Errorf("could not begin transaction: %w", err)
 	}
 
-	_, err = tx.ExecContext(ctx, UpdateNodeQuery, n.Description, n.Model, n.LastUpdated.Format("2006-01-02 15:04:05"), n.ID)
+	_, err = tx.ExecContext(ctx, UpdateNodeQuery, n.Description, n.Model, lastUpdated, n.ID)
 	if err != nil {
 		_ = tx.Rollback()
 		return nodemodel.Node{}, fmt.Errorf("could not update node: %w", err)

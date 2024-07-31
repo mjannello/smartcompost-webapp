@@ -13,7 +13,7 @@ type MeasurementService interface {
 	GetMeasurementsByNode(ctx context.Context, serialNumber string) ([]measurementmodel.Measurement, error)
 	GetMeasurementByID(ctx context.Context, measurementID uint64) (measurementmodel.Measurement, error)
 	UpdateMeasurement(ctx context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error)
-	DeleteMeasurement(ctx context.Context, measurementID uint64) (uint64, error)
+	DeleteMeasurement(ctx context.Context, measurement measurementmodel.Measurement, serialNumber string) (uint64, error)
 	AddNodeMeasurements(ctx context.Context, serialNumber string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error)
 	UpdateAPLastUpdated(ctx context.Context, serialNumber string, nodeLastUpdated time.Time) error
 }
@@ -65,10 +65,19 @@ func (ms *measurementService) UpdateMeasurement(ctx context.Context, measurement
 	return updatedMeasurement, nil
 }
 
-func (ms *measurementService) DeleteMeasurement(ctx context.Context, measurementID uint64) (uint64, error) {
-	deletedID, err := ms.measurementRepository.DeleteMeasurement(ctx, measurementID)
+func (ms *measurementService) DeleteMeasurement(ctx context.Context, measurement measurementmodel.Measurement, serialNumber string) (uint64, error) {
+	nodeID, err := ms.nodeService.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
-		log.Printf("Error deleting measurement with ID %d: %v", measurementID, err)
+		return 0, fmt.Errorf("node not found: %w", err)
+	}
+
+	if measurement.NodeID != nodeID {
+		log.Println("Error - Measurement does not belong to the specified node")
+		return 0, fmt.Errorf("error measurement does not belong to the specified node: %w", err)
+	}
+	deletedID, err := ms.measurementRepository.DeleteMeasurement(ctx, measurement.ID)
+	if err != nil {
+		log.Printf("Error deleting measurement with ID %d: %v", measurement.ID, err)
 		return 0, fmt.Errorf("error deleting measurement: %w", err)
 	}
 	log.Printf("Deleted measurement with ID %d", deletedID)

@@ -103,7 +103,7 @@ func (h *handler) CreateNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	node, err := h.nodeService.CreateNode(ctx, createNodeReq.SerialNumber, createNodeReq.Description, createNodeReq.Model)
+	node, err := h.nodeService.CreateNode(ctx, createNodeReq.Description, createNodeReq.Model)
 	if err != nil {
 		log.Printf("[Handler] CreateNode - Error creating node: %s", err.Error())
 		http.Error(w, "Error creating node", http.StatusInternalServerError)
@@ -181,7 +181,8 @@ type NodeRestModel struct {
 	ID           uint64      `json:"id"`
 	SerialNumber string      `json:"serial_number"`
 	Description  string      `json:"description"`
-	Type         string      `json:"type"`
+	Model        string      `json:"model"`
+	DateCreated  time.Time   `json:"date_created"`
 	LastUpdated  time.Time   `json:"last_updated"`
 	Measurements interface{} `json:"measurements,omitempty"`
 }
@@ -191,7 +192,8 @@ func RestNodeModelToApp(nodeRestModel NodeRestModel) nodemodel.Node {
 		ID:           nodeRestModel.ID,
 		SerialNumber: nodeRestModel.SerialNumber,
 		Description:  nodeRestModel.Description,
-		Model:        nodeRestModel.Type,
+		Model:        nodeRestModel.Model,
+		DateCreated:  nodeRestModel.DateCreated,
 		LastUpdated:  nodeRestModel.LastUpdated,
 	}
 
@@ -202,7 +204,8 @@ func AppToRestNodeModel(n nodemodel.Node) NodeRestModel {
 		ID:           n.ID,
 		SerialNumber: n.SerialNumber,
 		Description:  n.Description,
-		Type:         n.Model,
+		Model:        n.Model,
+		DateCreated:  n.DateCreated,
 		LastUpdated:  n.LastUpdated,
 	}
 }

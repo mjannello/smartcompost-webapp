@@ -3,8 +3,8 @@ module github.com/mjannello/smartcompost-webapp/backend
 go 1.22.4
 
 require (
-	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-sql-driver/mysql v1.8.1
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/yaml.v2 v2.4.0

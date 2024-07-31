@@ -100,13 +100,7 @@ func (h *handler) UpdateMeasurement(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	nodeIDStr := vars["nodeID"]
-	nodeID, err := strconv.ParseUint(nodeIDStr, 10, 64)
-	if err != nil {
-		log.Println("[Handler] DeleteMeasurement - Invalid nodeID")
-		http.Error(w, "Invalid nodeID", http.StatusBadRequest)
-		return
-	}
+	serialNumber := vars["serialNumber"]
 
 	measurementIDStr := vars["measurementID"]
 	measurementID, err := strconv.ParseUint(measurementIDStr, 10, 64)
@@ -124,13 +118,7 @@ func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if measurement.NodeID != nodeID {
-		log.Println("[Handler] DeleteMeasurement - Measurement does not belong to the specified node")
-		http.Error(w, "Measurement does not belong to the specified node", http.StatusNotFound)
-		return
-	}
-
-	deletedID, err := h.measurementService.DeleteMeasurement(ctx, measurementID)
+	deletedID, err := h.measurementService.DeleteMeasurement(ctx, measurement, serialNumber)
 	if err != nil {
 		log.Printf("[Handler] DeleteMeasurement - Error deleting measurement: %s", err.Error())
 		http.Error(w, "Error deleting measurement", http.StatusInternalServerError)

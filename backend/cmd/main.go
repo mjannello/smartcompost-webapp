@@ -9,6 +9,9 @@ import (
 	measurementrepo "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/adapter/repository"
 	measurementapp "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/app"
 	measurementport "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/port"
+	serialnumbergeneratorapp "github.com/mjannello/smartcompost-webapp/backend/internal/serial_number_generator/app"
+	"github.com/mjannello/smartcompost-webapp/backend/internal/serial_number_generator/generators"
+	"github.com/mjannello/smartcompost-webapp/backend/pkg/clock"
 	"log"
 	"net/http"
 	"os"
@@ -45,8 +48,12 @@ func main() {
 	}
 	defer database.Close()
 
+	realClock := clock.NewClock()
+	uuidGenerator := generators.NewUUIDGenerator()
+	serialNumberGeneratorService := serialnumbergeneratorapp.NewSerialNumberGeneratorService(uuidGenerator)
+
 	nodeRepo := noderepository.NewNodeRepository(database)
-	nodeService := nodeapp.NewNodeService(nodeRepo)
+	nodeService := nodeapp.NewNodeService(nodeRepo, serialNumberGeneratorService, realClock)
 	nodeHandler := nodeport.NewNodeHandler(nodeService)
 
 	measurementRepo := measurementrepo.NewMeasurementRepository(database)

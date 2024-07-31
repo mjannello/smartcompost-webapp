@@ -249,14 +249,21 @@ func TestMeasurementService_DeleteMeasurement(t *testing.T) {
 		nodeServiceMock           *test.NodeServiceMock
 	}
 	type input struct {
-		measurementID uint64
+		measurement  measurement.Measurement
+		serialNumber string
 	}
 	type output struct {
 		deletedMeasurementID uint64
 		err                  error
 	}
 
+	expectedSerialNumber := "ABCD"
 	expectedMeasurementID := uint64(1)
+	expectedMeasurement := measurement.Measurement{
+		ID:     expectedMeasurementID,
+		NodeID: uint64(123),
+		Value:  20.0,
+	}
 
 	tests := []struct {
 		name   string
@@ -266,8 +273,9 @@ func TestMeasurementService_DeleteMeasurement(t *testing.T) {
 	}{
 		{
 			name: "delete measurement by ID successfully",
-			in:   input{measurementID: expectedMeasurementID},
+			in:   input{measurement: expectedMeasurement, serialNumber: expectedSerialNumber},
 			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(expectedMeasurement.NodeID, nil)
 				df.measurementRepositoryMock.On("DeleteMeasurement", expectedMeasurementID).Return(expectedMeasurementID, nil)
 			},
 			assert: func(t *testing.T, out *output) {
@@ -277,8 +285,9 @@ func TestMeasurementService_DeleteMeasurement(t *testing.T) {
 		},
 		{
 			name: "error deleting measurement by ID",
-			in:   input{measurementID: expectedMeasurementID},
+			in:   input{measurement: expectedMeasurement, serialNumber: expectedSerialNumber},
 			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(expectedMeasurement.NodeID, nil)
 				df.measurementRepositoryMock.On("DeleteMeasurement", expectedMeasurementID).Return(uint64(0), fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
@@ -300,7 +309,7 @@ func TestMeasurementService_DeleteMeasurement(t *testing.T) {
 			tt.on(df)
 
 			// When
-			resultMeasurementDeletedID, err := s.DeleteMeasurement(context.Background(), tt.in.measurementID)
+			resultMeasurementDeletedID, err := s.DeleteMeasurement(context.Background(), tt.in.measurement, tt.in.serialNumber)
 
 			// Then
 			tt.assert(t, &output{resultMeasurementDeletedID, err})

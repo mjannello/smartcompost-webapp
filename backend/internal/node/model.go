@@ -11,6 +11,7 @@ type Node struct {
 	SerialNumber string
 	Description  string
 	Model        string
+	DateCreated  time.Time
 	LastUpdated  time.Time
 	Measurements []measurement.Measurement
 }

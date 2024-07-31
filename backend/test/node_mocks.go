@@ -11,7 +11,7 @@ type NodeServiceMock struct {
 	mock.Mock
 }
 
-func (ns *NodeServiceMock) CreateNode(_ context.Context, serialNumber, description, model string) (node.Node, error) {
+func (ns *NodeServiceMock) CreateNode(_ context.Context, description, model string) (node.Node, error) {
 	//TODO implement me
 	panic("implement me")
 }

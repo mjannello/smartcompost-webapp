@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	serialnumbergeneratorapp "github.com/mjannello/smartcompost-webapp/backend/internal/serial_number_generator/app"
+	"github.com/mjannello/smartcompost-webapp/backend/pkg/clock"
 	"log"
 	"time"
 
@@ -13,7 +15,7 @@ type NodeService interface {
 	GetNodes(ctx context.Context) ([]nodemodel.Node, error)
 	GetNode(ctx context.Context, nodeID uint64) (nodemodel.Node, error)
 	GetNodeIDBySerialNumber(ctx context.Context, serialNumber string) (uint64, error)
-	CreateNode(ctx context.Context, serialNumber, description, model string) (nodemodel.Node, error)
+	CreateNode(ctx context.Context, description, model string) (nodemodel.Node, error)
 	UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error)
 	UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error
 	DeleteNode(ctx context.Context, nodeID uint64) (uint64, error)
@@ -21,11 +23,16 @@ type NodeService interface {
 }
 
 type nodeService struct {
-	nodeRepository nodemodel.Repository
+	nodeRepository        nodemodel.Repository
+	serialNumberGenerator serialnumbergeneratorapp.SerialNumberGeneratorService
+	realClock             clock.Clock
 }
 
-func NewNodeService(repository nodemodel.Repository) NodeService {
-	return &nodeService{nodeRepository: repository}
+func NewNodeService(repository nodemodel.Repository, sngs serialnumbergeneratorapp.SerialNumberGeneratorService, realClock clock.Clock) NodeService {
+	return &nodeService{nodeRepository: repository,
+		serialNumberGenerator: sngs,
+		realClock:             realClock,
+	}
 }
 
 func (ns *nodeService) GetNodeIDBySerialNumber(ctx context.Context, serialNumber string) (uint64, error) {
@@ -68,7 +75,8 @@ func (ns *nodeService) GetNode(ctx context.Context, nodeID uint64) (nodemodel.No
 }
 
 func (ns *nodeService) UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error) {
-	updatedNode, err := ns.nodeRepository.UpdateNode(ctx, node)
+	lastUpdated := ns.realClock.Time()
+	updatedNode, err := ns.nodeRepository.UpdateNode(ctx, node, lastUpdated)
 	if err != nil {
 		log.Printf("Error updating node with ID %d: %v", node.ID, err)
 		return nodemodel.Node{}, fmt.Errorf("error updating node: %w", err)
@@ -104,8 +112,13 @@ func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64,
 	return nil
 }
 
-func (ns *nodeService) CreateNode(ctx context.Context, serialNumber, description, model string) (nodemodel.Node, error) {
-	dateCreated := time.Now()
+func (ns *nodeService) CreateNode(ctx context.Context, description, model string) (nodemodel.Node, error) {
+	dateCreated := ns.realClock.Time()
+	serialNumber, err := ns.serialNumberGenerator.New()
+	if err != nil {
+		log.Printf("Error creating node's serial number: %v", err)
+		return nodemodel.Node{}, fmt.Errorf("error creating node's serial number: %w", err)
+	}
 	createdNode, err := ns.nodeRepository.CreateNode(ctx, serialNumber, description, model, dateCreated)
 	if err != nil {
 		log.Printf("Error creating node: %v", err)
