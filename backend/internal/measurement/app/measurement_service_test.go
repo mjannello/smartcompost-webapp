@@ -3,6 +3,7 @@ package app_test
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement/app"
 	"github.com/mjannello/smartcompost-webapp/backend/test"
@@ -272,15 +273,25 @@ func TestMeasurementService_DeleteMeasurement(t *testing.T) {
 		assert func(*testing.T, *output)
 	}{
 		{
-			name: "delete measurement by ID successfully",
+			name: "error getting nodeID by serial number",
 			in:   input{measurement: expectedMeasurement, serialNumber: expectedSerialNumber},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(expectedMeasurement.NodeID, nil)
-				df.measurementRepositoryMock.On("DeleteMeasurement", expectedMeasurementID).Return(expectedMeasurementID, nil)
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(nil, fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
-				assert.NoError(t, out.err)
-				assert.Equal(t, expectedMeasurementID, out.deletedMeasurementID)
+				assert.ErrorContains(t, out.err, "error getting nodeID: test")
+			},
+		},
+		{
+			name: "error measurement does not belong to the specified node",
+			in:   input{measurement: expectedMeasurement, serialNumber: expectedSerialNumber},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(expectedMeasurement.NodeID+1, nil)
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.Error(t, out.err)
+				assert.ErrorContains(t, out.err, "error measurement does not belong to the specified node")
+				assert.Equal(t, uint64(0), out.deletedMeasurementID)
 			},
 		},
 		{
@@ -294,6 +305,18 @@ func TestMeasurementService_DeleteMeasurement(t *testing.T) {
 				assert.Error(t, out.err)
 				assert.ErrorContains(t, out.err, "error deleting measurement: test")
 				assert.Equal(t, uint64(0), out.deletedMeasurementID)
+			},
+		},
+		{
+			name: "delete measurement by ID successfully",
+			in:   input{measurement: expectedMeasurement, serialNumber: expectedSerialNumber},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(expectedMeasurement.NodeID, nil)
+				df.measurementRepositoryMock.On("DeleteMeasurement", expectedMeasurementID).Return(expectedMeasurementID, nil)
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.NoError(t, out.err)
+				assert.Equal(t, expectedMeasurementID, out.deletedMeasurementID)
 			},
 		},
 	}
@@ -382,7 +405,7 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 			},
 			assert: func(t *testing.T, out *output) {
 				assert.Error(t, out.err)
-				assert.ErrorContains(t, out.err, "node not found: test")
+				assert.ErrorContains(t, out.err, "error getting nodeID: test")
 				assert.Nil(t, out.addedMeasurements)
 			},
 		},
@@ -433,6 +456,82 @@ func TestMeasurementService_AddNodeMeasurements(t *testing.T) {
 			// Then
 			tt.assert(t, &output{resultMeasurements, err})
 			measurementRepositoryMock.AssertExpectations(t)
+			nodeServiceMock.AssertExpectations(t)
+
+		})
+	}
+}
+
+func TestMeasurementService_UpdateAPLastUpdated(t *testing.T) {
+	type depFields struct {
+		nodeServiceMock *test.NodeServiceMock
+	}
+	type input struct {
+		serialNumber string
+		lastUpdated  time.Time
+	}
+	type output struct {
+		err error
+	}
+
+	newUUID, _ := uuid.NewUUID()
+	expectedSerialNumber := newUUID.String()
+	expectedLastUpdated := time.Date(2024, 06, 20, 20, 15, 30, 0, time.UTC)
+
+	tests := []struct {
+		name   string
+		in     input
+		on     func(*depFields)
+		assert func(*testing.T, *output)
+	}{
+		{
+			name: "error getting nodeID by serial number",
+			in:   input{serialNumber: expectedSerialNumber, lastUpdated: expectedLastUpdated},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(nil, fmt.Errorf("test"))
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.ErrorContains(t, out.err, "error getting nodeID: test")
+			},
+		},
+		{
+			name: "error updating AP lastUpdated timestamp",
+			in:   input{serialNumber: expectedSerialNumber, lastUpdated: expectedLastUpdated},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(uint64(1), nil)
+				df.nodeServiceMock.On("UpdateNodeLastUpdated", uint64(1), expectedLastUpdated).Return(fmt.Errorf("test"))
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.ErrorContains(t, out.err, "error updating AP node last_updated: test")
+			},
+		},
+		{
+			name: "update AP lastUpdated timestamp successfully",
+			in:   input{serialNumber: expectedSerialNumber, lastUpdated: expectedLastUpdated},
+			on: func(df *depFields) {
+				df.nodeServiceMock.On("GetNodeIDBySerialNumber", expectedSerialNumber).Return(uint64(1), nil)
+				df.nodeServiceMock.On("UpdateNodeLastUpdated", uint64(1), expectedLastUpdated).Return(nil)
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.NoError(t, out.err)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Having
+			nodeServiceMock := &test.NodeServiceMock{}
+			s := app.NewMeasurementService(nil, nodeServiceMock)
+
+			df := &depFields{nodeServiceMock: nodeServiceMock}
+			tt.on(df)
+
+			// When
+			err := s.UpdateAPLastUpdated(context.Background(), tt.in.serialNumber, tt.in.lastUpdated)
+
+			// Then
+			tt.assert(t, &output{err})
 			nodeServiceMock.AssertExpectations(t)
 
 		})

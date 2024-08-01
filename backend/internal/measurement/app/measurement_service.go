@@ -68,12 +68,13 @@ func (ms *measurementService) UpdateMeasurement(ctx context.Context, measurement
 func (ms *measurementService) DeleteMeasurement(ctx context.Context, measurement measurementmodel.Measurement, serialNumber string) (uint64, error) {
 	nodeID, err := ms.nodeService.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
-		return 0, fmt.Errorf("node not found: %w", err)
+		log.Printf("Error fetching nodeID by serial number %s: %v", serialNumber, err)
+		return 0, fmt.Errorf("error getting nodeID: %w", err)
 	}
 
 	if measurement.NodeID != nodeID {
 		log.Println("Error - Measurement does not belong to the specified node")
-		return 0, fmt.Errorf("error measurement does not belong to the specified node: %w", err)
+		return 0, fmt.Errorf("error measurement does not belong to the specified node")
 	}
 	deletedID, err := ms.measurementRepository.DeleteMeasurement(ctx, measurement.ID)
 	if err != nil {
@@ -85,10 +86,10 @@ func (ms *measurementService) DeleteMeasurement(ctx context.Context, measurement
 }
 
 func (ms *measurementService) AddNodeMeasurements(ctx context.Context, serialNumber string, nodeLastUpdated time.Time, measurements []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
-	// Validate that the node exists
 	nodeID, err := ms.nodeService.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
-		return nil, fmt.Errorf("node not found: %w", err)
+		log.Printf("Error fetching nodeID by serial number %s: %v", serialNumber, err)
+		return nil, fmt.Errorf("error getting nodeID: %w", err)
 	}
 
 	// Add each measurement
@@ -116,10 +117,12 @@ func (ms *measurementService) AddNodeMeasurements(ctx context.Context, serialNum
 func (ms *measurementService) UpdateAPLastUpdated(ctx context.Context, serialNumber string, nodeLastUpdated time.Time) error {
 	nodeID, err := ms.nodeService.GetNodeIDBySerialNumber(ctx, serialNumber)
 	if err != nil {
-		return fmt.Errorf("node not found: %w", err)
+		log.Printf("Error fetching nodeID by serial number %s: %v", serialNumber, err)
+		return fmt.Errorf("error getting nodeID: %w", err)
 	}
 	err = ms.nodeService.UpdateNodeLastUpdated(ctx, nodeID, nodeLastUpdated)
 	if err != nil {
+		log.Printf("Error updating node %s lastUpdated timestamp: %v", serialNumber, err)
 		return fmt.Errorf("error updating AP node last_updated: %w", err)
 	}
 	return nil
