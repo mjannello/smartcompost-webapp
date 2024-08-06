@@ -284,3 +284,207 @@ func TestNodeService_GetNodeIDBySerialNumber(t *testing.T) {
 		})
 	}
 }
+
+func TestNodeService_UpdateNode(t *testing.T) {
+	type depFields struct {
+		nodeRepository *test.NodeRepositoryMock
+		realClock      *clock.ClockMock
+	}
+	type input struct {
+		node node.Node
+	}
+	type output struct {
+		node node.Node
+		err  error
+	}
+	timeNow := time.Date(2024, 06, 20, 20, 15, 30, 0, time.UTC)
+	nodeToUpdate := test.MakeNode(1)
+	updatedNode := nodeToUpdate
+	updatedNode.LastUpdated = timeNow
+	tests := []struct {
+		name   string
+		in     input
+		on     func(*depFields)
+		assert func(*testing.T, *output)
+	}{
+		{
+			name: "error updating node",
+			in:   input{node: nodeToUpdate},
+			on: func(df *depFields) {
+				df.realClock.On("Time").Return(timeNow)
+				df.nodeRepository.On("UpdateNode", nodeToUpdate, timeNow).Return(node.Node{}, fmt.Errorf("test"))
+
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.ErrorContains(t, out.err, "error updating node: test")
+				assert.Equal(t, node.Node{}, out.node)
+			},
+		},
+		{
+			name: "update node successfully",
+			in:   input{node: nodeToUpdate},
+			on: func(df *depFields) {
+				df.realClock.On("Time").Return(timeNow)
+				df.nodeRepository.On("UpdateNode", nodeToUpdate, timeNow).Return(updatedNode, nil)
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.NoError(t, out.err)
+				assert.Equal(t, updatedNode, out.node)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Having
+			nodeRepositoryMock := &test.NodeRepositoryMock{}
+			clockMock := &clock.ClockMock{}
+			s := app.NewNodeService(nodeRepositoryMock, nil, clockMock)
+
+			df := &depFields{nodeRepository: nodeRepositoryMock, realClock: clockMock}
+			tt.on(df)
+
+			// When
+			nodeCreated, err := s.UpdateNode(context.Background(), tt.in.node)
+
+			// Then
+			tt.assert(t, &output{nodeCreated, err})
+			nodeRepositoryMock.AssertExpectations(t)
+			clockMock.AssertExpectations(t)
+		})
+	}
+}
+
+func TestNodeService_UpdateNodeLastUpdated(t *testing.T) {
+	type depFields struct {
+		nodeRepository *test.NodeRepositoryMock
+		realClock      *clock.ClockMock
+	}
+	type input struct {
+		nodeID      uint64
+		lastUpdated time.Time
+	}
+	type output struct {
+		err error
+	}
+	newLastUpdated := time.Date(2024, 06, 20, 22, 30, 30, 0, time.UTC)
+	timeNow := time.Date(2024, 06, 20, 20, 15, 30, 0, time.UTC)
+
+	nodeToUpdate := test.MakeNode(1)
+	updatedNode := nodeToUpdate
+	updatedNode.LastUpdated = newLastUpdated
+	tests := []struct {
+		name   string
+		in     input
+		on     func(*depFields)
+		assert func(*testing.T, *output)
+	}{
+		{
+			name: "error getting node",
+			in:   input{nodeID: uint64(1), lastUpdated: newLastUpdated},
+			on: func(df *depFields) {
+				df.nodeRepository.On("GetNodeByID", uint64(1)).Return(node.Node{}, fmt.Errorf("test"))
+
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.ErrorContains(t, out.err, "node not found: test")
+			},
+		},
+		{
+			name: "update node lastUpdated successfully",
+			in:   input{nodeID: uint64(1), lastUpdated: newLastUpdated},
+			on: func(df *depFields) {
+				df.realClock.On("Time").Return(timeNow)
+				df.nodeRepository.On("GetNodeByID", uint64(1)).Return(nodeToUpdate, nil)
+				df.nodeRepository.On("UpdateNode", updatedNode, timeNow).Return(updatedNode, nil)
+
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.NoError(t, out.err)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Having
+			nodeRepositoryMock := &test.NodeRepositoryMock{}
+			clockMock := &clock.ClockMock{}
+			s := app.NewNodeService(nodeRepositoryMock, nil, clockMock)
+
+			df := &depFields{nodeRepository: nodeRepositoryMock, realClock: clockMock}
+			tt.on(df)
+
+			// When
+			err := s.UpdateNodeLastUpdated(context.Background(), tt.in.nodeID, tt.in.lastUpdated)
+
+			// Then
+			tt.assert(t, &output{err})
+			nodeRepositoryMock.AssertExpectations(t)
+			clockMock.AssertExpectations(t)
+		})
+	}
+}
+
+func TestNodeService_DeleteNode(t *testing.T) {
+
+	type depFields struct {
+		nodeRepository *test.NodeRepositoryMock
+	}
+
+	type input struct {
+		nodeID uint64
+	}
+
+	type output struct {
+		deletedNodeID uint64
+		err           error
+	}
+	tests := []struct {
+		name   string
+		in     input
+		on     func(*depFields)
+		assert func(*testing.T, *output)
+	}{
+		{
+			name: "error deleting node",
+			in:   input{uint64(1)},
+			on: func(df *depFields) {
+				df.nodeRepository.On("DeleteNode", uint64(1)).Return(node.Node{}, fmt.Errorf("test"))
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.ErrorContains(t, out.err, "error deleting node: test")
+				assert.Equal(t, uint64(0), out.deletedNodeID)
+			},
+		},
+		{
+			name: "deleted node successfully",
+			in:   input{uint64(1)},
+			on: func(df *depFields) {
+				df.nodeRepository.On("DeleteNode", uint64(1)).Return(uint64(1), nil)
+			},
+			assert: func(t *testing.T, out *output) {
+				assert.NoError(t, out.err)
+				assert.Equal(t, uint64(1), out.deletedNodeID)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Having
+			nodeRepositoryMock := &test.NodeRepositoryMock{}
+			s := app.NewNodeService(nodeRepositoryMock, nil, nil)
+
+			df := &depFields{nodeRepository: nodeRepositoryMock}
+			tt.on(df)
+
+			// When
+			deletedNodeID, err := s.DeleteNode(context.Background(), tt.in.nodeID)
+
+			// Then
+			tt.assert(t, &output{deletedNodeID, err})
+			nodeRepositoryMock.AssertExpectations(t)
+		})
+	}
+}

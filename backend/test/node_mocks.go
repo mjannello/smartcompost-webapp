@@ -81,14 +81,18 @@ func (nr *NodeRepositoryMock) CreateNode(_ context.Context, serialNumber, descri
 	return n, e
 }
 
-func (nr *NodeRepositoryMock) UpdateNode(ctx context.Context, n node.Node, lastUpdated time.Time) (node.Node, error) {
-	//TODO implement me
-	panic("implement me")
+func (nr *NodeRepositoryMock) UpdateNode(_ context.Context, nodeToUpdate node.Node, lastUpdated time.Time) (node.Node, error) {
+	args := nr.Called(nodeToUpdate, lastUpdated)
+	nodeUpdated, _ := args.Get(0).(node.Node)
+	e, _ := args.Get(1).(error)
+	return nodeUpdated, e
 }
 
-func (nr *NodeRepositoryMock) DeleteNode(ctx context.Context, nodeID uint64) (uint64, error) {
-	//TODO implement me
-	panic("implement me")
+func (nr *NodeRepositoryMock) DeleteNode(_ context.Context, nodeID uint64) (uint64, error) {
+	args := nr.Called(nodeID)
+	deletedNodeID, _ := args.Get(0).(uint64)
+	e, _ := args.Get(1).(error)
+	return deletedNodeID, e
 }
 
 func (nr *NodeRepositoryMock) GetNodeIDBySerialNumber(_ context.Context, serialNumber string) (uint64, error) {

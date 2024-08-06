@@ -93,7 +93,7 @@ func (ns *nodeService) UpdateNode(ctx context.Context, node nodemodel.Node) (nod
 
 // UpdateNodeLastUpdated uses the lastUpdated timestamp coming from the AP. Not the real time on web server
 func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error {
-	node, err := ns.GetNode(ctx, nodeID)
+	node, err := ns.nodeRepository.GetNodeByID(ctx, nodeID)
 	if err != nil {
 		return fmt.Errorf("node not found: %w", err)
 	}
