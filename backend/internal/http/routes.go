@@ -31,14 +31,13 @@ func (r *routerHandler) RouteURLs(router *mux.Router) {
 	router.HandleFunc(nodesPrefix, r.nodeHandler.GetNodes).Methods(http.MethodGet)
 	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.GetNodeByID).Methods(http.MethodGet)
 	router.HandleFunc(nodesPrefix, r.nodeHandler.CreateNode).Methods(http.MethodPost)
-	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.UpdateNode).Methods(http.MethodPut)
+	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.UpdateNode).Methods(http.MethodPatch)
 	router.HandleFunc(nodesPrefix+"/{nodeID}", r.nodeHandler.DeleteNode).Methods(http.MethodDelete)
 
 	// Measurements
 	measurementsSuffix := "/{serialNumber}/measurements"
 	measurementsPrefix := nodesPrefix + measurementsSuffix
 	router.HandleFunc(measurementsPrefix, r.measurementHandler.GetMeasurementsByNode).Methods(http.MethodGet)
-	//router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.GetMeasurementByID).Methods(http.MethodGet)
 	router.HandleFunc(measurementsPrefix, r.measurementHandler.AddMeasurement).Methods(http.MethodPost)
 	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.UpdateMeasurement).Methods(http.MethodPut)
 	router.HandleFunc(measurementsPrefix+"/{measurementID}", r.measurementHandler.DeleteMeasurement).Methods(http.MethodDelete)

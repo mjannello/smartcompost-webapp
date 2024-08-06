@@ -134,17 +134,32 @@ func (h *handler) UpdateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var nodeRest NodeRestModel
-	if err := json.NewDecoder(r.Body).Decode(&nodeRest); err != nil {
+	var patch PatchNodeModel
+	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
 		log.Printf("[Handler] UpdateNode - Invalid request body: %s", err.Error())
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	node := RestNodeModelToApp(nodeRest)
-	node.ID = nodeID
 
 	ctx := r.Context()
-	updatedNode, err := h.nodeService.UpdateNode(ctx, node)
+	existingNode, err := h.nodeService.GetNode(ctx, nodeID)
+	if err != nil {
+		log.Printf("[Handler] UpdateNode - Node not found: %s", err.Error())
+		http.Error(w, "Node not found", http.StatusNotFound)
+		return
+	}
+
+	if patch.SerialNumber != nil {
+		existingNode.SerialNumber = *patch.SerialNumber
+	}
+	if patch.Description != nil {
+		existingNode.Description = *patch.Description
+	}
+	if patch.Model != nil {
+		existingNode.Model = *patch.Model
+	}
+
+	updatedNode, err := h.nodeService.UpdateNode(ctx, existingNode)
 	if err != nil {
 		log.Printf("[Handler] UpdateNode - Error updating node: %s", err.Error())
 		http.Error(w, "Error updating node", http.StatusInternalServerError)
@@ -185,6 +200,12 @@ type NodeRestModel struct {
 	DateCreated  time.Time   `json:"date_created"`
 	LastUpdated  time.Time   `json:"last_updated"`
 	Measurements interface{} `json:"measurements,omitempty"`
+}
+
+type PatchNodeModel struct {
+	SerialNumber *string `json:"serial_number,omitempty"`
+	Description  *string `json:"description,omitempty"`
+	Model        *string `json:"model,omitempty"`
 }
 
 func RestNodeModelToApp(nodeRestModel NodeRestModel) nodemodel.Node {

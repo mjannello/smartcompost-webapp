@@ -14,7 +14,7 @@ const (
 	GetNodeByIDQuery             = "SELECT id, serial_number, description, model, date_created,  last_updated FROM nodes WHERE id = ?"
 	GetNodeIDBySerialNumberQuery = "SELECT id FROM nodes WHERE serial_number = ?"
 	CreateNodeQuery              = "INSERT INTO nodes (serial_number, description, model, date_created, last_updated) VALUES (?, ?, ?, ?, ?)"
-	UpdateNodeQuery              = "UPDATE nodes SET description = ?, model = ?, last_updated = ? WHERE id = ?"
+	UpdateNodeQuery              = "UPDATE nodes SET serial_number=?, description = ?, model = ?, last_updated = ? WHERE id = ?"
 	DeleteNodeQuery              = "DELETE FROM nodes WHERE id = ?"
 	CheckSerialNumberExistsQuery = "SELECT COUNT(*) FROM nodes WHERE serial_number = ?"
 )
@@ -191,7 +191,7 @@ func (m *mySQL) UpdateNode(ctx context.Context, n nodemodel.Node, lastUpdated ti
 		return nodemodel.Node{}, fmt.Errorf("could not begin transaction: %w", err)
 	}
 
-	_, err = tx.ExecContext(ctx, UpdateNodeQuery, n.Description, n.Model, lastUpdated, n.ID)
+	_, err = tx.ExecContext(ctx, UpdateNodeQuery, n.SerialNumber, n.Description, n.Model, lastUpdated, n.ID)
 	if err != nil {
 		_ = tx.Rollback()
 		return nodemodel.Node{}, fmt.Errorf("could not update node: %w", err)
