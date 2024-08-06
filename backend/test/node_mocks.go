@@ -11,11 +11,6 @@ type NodeServiceMock struct {
 	mock.Mock
 }
 
-func (ns *NodeServiceMock) CreateNode(_ context.Context, description, model string) (node.Node, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (ns *NodeServiceMock) GetNodes(ctx context.Context) ([]node.Node, error) {
 	//TODO implement me
 	panic("implement me")
@@ -26,6 +21,18 @@ func (ns *NodeServiceMock) GetNode(_ context.Context, nodeID uint64) (node.Node,
 	n, _ := args.Get(0).(node.Node)
 	e, _ := args.Get(1).(error)
 	return n, e
+}
+
+func (ns *NodeServiceMock) GetNodeIDBySerialNumber(_ context.Context, serialNumber string) (uint64, error) {
+	args := ns.Called(serialNumber)
+	nodeID, _ := args.Get(0).(uint64)
+	e, _ := args.Get(1).(error)
+	return nodeID, e
+}
+
+func (ns *NodeServiceMock) CreateNode(_ context.Context, description, model string) (node.Node, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (ns *NodeServiceMock) UpdateNode(ctx context.Context, node node.Node) (node.Node, error) {
@@ -44,14 +51,49 @@ func (ns *NodeServiceMock) DeleteNode(ctx context.Context, nodeID uint64) (uint6
 	panic("implement me")
 }
 
-func (ns *NodeServiceMock) GetNodeIDBySerialNumber(_ context.Context, serialNumber string) (uint64, error) {
-	args := ns.Called(serialNumber)
-	nodeID, _ := args.Get(0).(uint64)
-	e, _ := args.Get(1).(error)
-	return nodeID, e
-}
-
 func (ns *NodeServiceMock) GetNodeBySerialNumber(ctx context.Context, serialNumber string) (node.Node, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+type NodeRepositoryMock struct {
+	mock.Mock
+}
+
+func (nr *NodeRepositoryMock) GetAllNodes(_ context.Context) ([]node.Node, error) {
+	args := nr.Called()
+	nodes, _ := args.Get(0).([]node.Node)
+	e, _ := args.Get(1).(error)
+	return nodes, e
+}
+
+func (nr *NodeRepositoryMock) GetNodeByID(_ context.Context, nodeID uint64) (node.Node, error) {
+	args := nr.Called(nodeID)
+	node, _ := args.Get(0).(node.Node)
+	e, _ := args.Get(1).(error)
+	return node, e
+}
+
+func (nr *NodeRepositoryMock) CreateNode(_ context.Context, serialNumber, description, model string, dateCreated time.Time) (node.Node, error) {
+	args := nr.Called(serialNumber, description, model, dateCreated)
+	n, _ := args.Get(0).(node.Node)
+	e, _ := args.Get(1).(error)
+	return n, e
+}
+
+func (nr *NodeRepositoryMock) UpdateNode(ctx context.Context, n node.Node, lastUpdated time.Time) (node.Node, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (nr *NodeRepositoryMock) DeleteNode(ctx context.Context, nodeID uint64) (uint64, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (nr *NodeRepositoryMock) GetNodeIDBySerialNumber(_ context.Context, serialNumber string) (uint64, error) {
+	args := nr.Called(serialNumber)
+	node, _ := args.Get(0).(uint64)
+	e, _ := args.Get(1).(error)
+	return node, e
 }

@@ -15,8 +15,8 @@ import (
 func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 
 	type depFields struct {
-		measurementRepositoryMock *test.MeasurementRepositoryMock
-		nodeServiceMock           *test.NodeServiceMock
+		measurementRepository *test.MeasurementRepositoryMock
+		nodeService           *test.NodeServiceMock
 	}
 	type input struct {
 		serialNumber string
@@ -42,8 +42,8 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 			name: "get measurements by NodeID successfully",
 			in:   input{serialNumber: "ABCD"},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "ABCD").Return(uint64(1), nil)
-				df.measurementRepositoryMock.On("GetAllMeasurementsByNodeID", uint64(1)).Return(expectedMeasurements, nil)
+				df.nodeService.On("GetNodeIDBySerialNumber", "ABCD").Return(uint64(1), nil)
+				df.measurementRepository.On("GetAllMeasurementsByNodeID", uint64(1)).Return(expectedMeasurements, nil)
 			},
 			assert: func(t *testing.T, out *output) {
 				assert.NoError(t, out.err)
@@ -54,10 +54,9 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 			name: "error getting nodeID by serial number",
 			in:   input{serialNumber: "ABCD"},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "ABCD").Return(nil, fmt.Errorf("test"))
+				df.nodeService.On("GetNodeIDBySerialNumber", "ABCD").Return(nil, fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
-				assert.Error(t, out.err)
 				assert.ErrorContains(t, out.err, "error getting nodeID: test")
 				assert.Nil(t, out.measurements)
 			},
@@ -66,8 +65,8 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 			name: "error getting measurements by NodeID",
 			in:   input{serialNumber: "ABCD"},
 			on: func(df *depFields) {
-				df.nodeServiceMock.On("GetNodeIDBySerialNumber", "ABCD").Return(uint64(1), nil)
-				df.measurementRepositoryMock.On("GetAllMeasurementsByNodeID", uint64(1)).Return(nil, fmt.Errorf("test"))
+				df.nodeService.On("GetNodeIDBySerialNumber", "ABCD").Return(uint64(1), nil)
+				df.measurementRepository.On("GetAllMeasurementsByNodeID", uint64(1)).Return(nil, fmt.Errorf("test"))
 			},
 			assert: func(t *testing.T, out *output) {
 				assert.Error(t, out.err)
@@ -84,7 +83,7 @@ func TestMeasurementService_GetMeasurementsByNode(t *testing.T) {
 			nodeServiceMock := &test.NodeServiceMock{}
 			s := app.NewMeasurementService(measurementRepositoryMock, nodeServiceMock)
 
-			df := &depFields{measurementRepositoryMock: measurementRepositoryMock, nodeServiceMock: nodeServiceMock}
+			df := &depFields{measurementRepository: measurementRepositoryMock, nodeService: nodeServiceMock}
 			tt.on(df)
 
 			// When

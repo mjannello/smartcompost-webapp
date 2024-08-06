@@ -19,7 +19,6 @@ type NodeService interface {
 	UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error)
 	UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error
 	DeleteNode(ctx context.Context, nodeID uint64) (uint64, error)
-	GetNodeBySerialNumber(ctx context.Context, serialNumber string) (nodemodel.Node, error)
 }
 
 type nodeService struct {
@@ -35,33 +34,14 @@ func NewNodeService(repository nodemodel.Repository, sngs serialnumbergeneratora
 	}
 }
 
-func (ns *nodeService) GetNodeIDBySerialNumber(ctx context.Context, serialNumber string) (uint64, error) {
-	nodeID, err := ns.nodeRepository.GetNodeIDBySerialNumber(ctx, serialNumber)
-	if err != nil {
-		log.Printf("Error fetching nodeID: %v", err)
-		return 0, fmt.Errorf("error getting nodeID: %w", err)
-	}
-	log.Printf("Fetched %d nodeID", nodeID)
-	return nodeID, nil
-}
-
 func (ns *nodeService) GetNodes(ctx context.Context) ([]nodemodel.Node, error) {
 	nodes, err := ns.nodeRepository.GetAllNodes(ctx)
 	if err != nil {
 		log.Printf("Error fetching nodes: %v", err)
-		return nil, fmt.Errorf("error getting nodes: %w", err)
+		return nil, fmt.Errorf("error fetching nodes: %w", err)
 	}
 	log.Printf("Fetched %d nodes", len(nodes))
 	return nodes, nil
-}
-
-func (ns *nodeService) GetNodeBySerialNumber(ctx context.Context, serialNumber string) (nodemodel.Node, error) {
-	nodeID, err := ns.GetNodeIDBySerialNumber(ctx, serialNumber)
-	if err != nil {
-		log.Printf("Error fetching nodeID by serial number %s: %v", serialNumber, err)
-		return nodemodel.Node{}, fmt.Errorf("error getting nodeID: %w", err)
-	}
-	return ns.GetNode(ctx, nodeID)
 }
 
 func (ns *nodeService) GetNode(ctx context.Context, nodeID uint64) (nodemodel.Node, error) {
@@ -72,6 +52,32 @@ func (ns *nodeService) GetNode(ctx context.Context, nodeID uint64) (nodemodel.No
 	}
 	log.Printf("Fetched node: %+v", node)
 	return node, nil
+}
+
+func (ns *nodeService) GetNodeIDBySerialNumber(ctx context.Context, serialNumber string) (uint64, error) {
+	nodeID, err := ns.nodeRepository.GetNodeIDBySerialNumber(ctx, serialNumber)
+	if err != nil {
+		log.Printf("Error fetching nodeID: %v", err)
+		return 0, fmt.Errorf("error fetching nodeID: %w", err)
+	}
+	log.Printf("Fetched %d nodeID", nodeID)
+	return nodeID, nil
+}
+
+func (ns *nodeService) CreateNode(ctx context.Context, description, model string) (nodemodel.Node, error) {
+	dateCreated := ns.realClock.Time()
+	serialNumber, err := ns.serialNumberGenerator.New()
+	if err != nil {
+		log.Printf("Error creating node's serial number: %v", err)
+		return nodemodel.Node{}, fmt.Errorf("error creating node's serial number: %w", err)
+	}
+	createdNode, err := ns.nodeRepository.CreateNode(ctx, serialNumber, description, model, dateCreated)
+	if err != nil {
+		log.Printf("Error creating node: %v", err)
+		return nodemodel.Node{}, fmt.Errorf("error creating node: %w", err)
+	}
+	log.Printf("Created node: %+v", createdNode)
+	return createdNode, nil
 }
 
 func (ns *nodeService) UpdateNode(ctx context.Context, node nodemodel.Node) (nodemodel.Node, error) {
@@ -85,16 +91,7 @@ func (ns *nodeService) UpdateNode(ctx context.Context, node nodemodel.Node) (nod
 	return updatedNode, nil
 }
 
-func (ns *nodeService) DeleteNode(ctx context.Context, nodeID uint64) (uint64, error) {
-	deletedID, err := ns.nodeRepository.DeleteNode(ctx, nodeID)
-	if err != nil {
-		log.Printf("Error deleting node with ID %d: %v", nodeID, err)
-		return 0, fmt.Errorf("error deleting node: %w", err)
-	}
-	log.Printf("Deleted node with ID %d", deletedID)
-	return deletedID, nil
-}
-
+// UpdateNodeLastUpdated uses the lastUpdated timestamp coming from the AP. Not the real time on web server
 func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64, lastUpdated time.Time) error {
 	node, err := ns.GetNode(ctx, nodeID)
 	if err != nil {
@@ -112,18 +109,12 @@ func (ns *nodeService) UpdateNodeLastUpdated(ctx context.Context, nodeID uint64,
 	return nil
 }
 
-func (ns *nodeService) CreateNode(ctx context.Context, description, model string) (nodemodel.Node, error) {
-	dateCreated := ns.realClock.Time()
-	serialNumber, err := ns.serialNumberGenerator.New()
+func (ns *nodeService) DeleteNode(ctx context.Context, nodeID uint64) (uint64, error) {
+	deletedID, err := ns.nodeRepository.DeleteNode(ctx, nodeID)
 	if err != nil {
-		log.Printf("Error creating node's serial number: %v", err)
-		return nodemodel.Node{}, fmt.Errorf("error creating node's serial number: %w", err)
+		log.Printf("Error deleting node with ID %d: %v", nodeID, err)
+		return 0, fmt.Errorf("error deleting node: %w", err)
 	}
-	createdNode, err := ns.nodeRepository.CreateNode(ctx, serialNumber, description, model, dateCreated)
-	if err != nil {
-		log.Printf("Error creating node: %v", err)
-		return nodemodel.Node{}, fmt.Errorf("error creating node: %w", err)
-	}
-	log.Printf("Created node: %+v", createdNode)
-	return createdNode, nil
+	log.Printf("Deleted node with ID %d", deletedID)
+	return deletedID, nil
 }
