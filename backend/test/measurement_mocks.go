@@ -4,6 +4,7 @@ import (
 	"context"
 	measurementmodel "github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 	"github.com/stretchr/testify/mock"
+	"time"
 )
 
 type MeasurementRepositoryMock struct {
@@ -43,4 +44,43 @@ func (mr *MeasurementRepositoryMock) GetAllMeasurementsByNodeID(_ context.Contex
 	measurements, _ := args.Get(0).([]measurementmodel.Measurement)
 	e, _ := args.Get(1).(error)
 	return measurements, e
+}
+
+type MeasurementServiceMock struct {
+	mock.Mock
+}
+
+func (m *MeasurementServiceMock) GetMeasurementsByNode(_ context.Context, serialNumber string) ([]measurementmodel.Measurement, error) {
+	args := m.Called(serialNumber)
+	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
+}
+
+func (m *MeasurementServiceMock) GetMeasurementsByNodeID(ctx context.Context, nodeID uint64) ([]measurementmodel.Measurement, error) {
+	args := m.Called(ctx, nodeID)
+	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
+}
+
+func (m *MeasurementServiceMock) GetMeasurementByID(ctx context.Context, measurementID uint64) (measurementmodel.Measurement, error) {
+	args := m.Called(ctx, measurementID)
+	return args.Get(0).(measurementmodel.Measurement), args.Error(1)
+}
+
+func (m *MeasurementServiceMock) UpdateMeasurement(_ context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error) {
+	args := m.Called(measurement)
+	return args.Get(0).(measurementmodel.Measurement), args.Error(1)
+}
+
+func (m *MeasurementServiceMock) DeleteMeasurement(_ context.Context, measurement measurementmodel.Measurement, serialNumber string) (uint64, error) {
+	args := m.Called(measurement, serialNumber)
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+func (m *MeasurementServiceMock) AddNodeMeasurements(_ context.Context, serialNumber string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
+	args := m.Called(serialNumber, nodeLastUpdated, measurement)
+	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
+}
+
+func (m *MeasurementServiceMock) UpdateAPLastUpdated(_ context.Context, serialNumber string, nodeLastUpdated time.Time) error {
+	args := m.Called(serialNumber, nodeLastUpdated)
+	return args.Error(0)
 }

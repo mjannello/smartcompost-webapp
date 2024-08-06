@@ -1,56 +1,16 @@
 package port_test
 
 import (
-	"context"
 	"github.com/gorilla/mux"
 	measurementmodel "github.com/mjannello/smartcompost-webapp/backend/internal/measurement"
 	"github.com/mjannello/smartcompost-webapp/backend/internal/measurement/port"
+	"github.com/mjannello/smartcompost-webapp/backend/test"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 )
-
-type MeasurementServiceMock struct {
-	mock.Mock
-}
-
-func (m *MeasurementServiceMock) GetMeasurementsByNode(_ context.Context, serialNumber string) ([]measurementmodel.Measurement, error) {
-	args := m.Called(serialNumber)
-	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
-}
-
-func (m *MeasurementServiceMock) GetMeasurementsByNodeID(ctx context.Context, nodeID uint64) ([]measurementmodel.Measurement, error) {
-	args := m.Called(ctx, nodeID)
-	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
-}
-
-func (m *MeasurementServiceMock) GetMeasurementByID(ctx context.Context, measurementID uint64) (measurementmodel.Measurement, error) {
-	args := m.Called(ctx, measurementID)
-	return args.Get(0).(measurementmodel.Measurement), args.Error(1)
-}
-
-func (m *MeasurementServiceMock) UpdateMeasurement(_ context.Context, measurement measurementmodel.Measurement) (measurementmodel.Measurement, error) {
-	args := m.Called(measurement)
-	return args.Get(0).(measurementmodel.Measurement), args.Error(1)
-}
-
-func (m *MeasurementServiceMock) DeleteMeasurement(_ context.Context, measurement measurementmodel.Measurement, serialNumber string) (uint64, error) {
-	args := m.Called(measurement, serialNumber)
-	return args.Get(0).(uint64), args.Error(1)
-}
-
-func (m *MeasurementServiceMock) AddNodeMeasurements(_ context.Context, serialNumber string, nodeLastUpdated time.Time, measurement []measurementmodel.Measurement) ([]measurementmodel.Measurement, error) {
-	args := m.Called(serialNumber, nodeLastUpdated, measurement)
-	return args.Get(0).([]measurementmodel.Measurement), args.Error(1)
-}
-
-func (m *MeasurementServiceMock) UpdateAPLastUpdated(_ context.Context, serialNumber string, nodeLastUpdated time.Time) error {
-	args := m.Called(serialNumber, nodeLastUpdated)
-	return args.Error(0)
-}
 
 func TestGetMeasurementsByNodeID(t *testing.T) {
 	type input struct {
@@ -60,25 +20,13 @@ func TestGetMeasurementsByNodeID(t *testing.T) {
 		response *http.Response
 	}
 	type depFields struct {
-		service *MeasurementServiceMock
+		service *test.MeasurementServiceMock
 	}
 
 	timeNow := time.Date(2024, 06, 20, 20, 15, 30, 0, time.UTC)
 	expectedMeasurements := []measurementmodel.Measurement{
-		{
-			ID:        uint64(10),
-			NodeID:    uint64(1),
-			Value:     20.0,
-			Type:      "Web",
-			Timestamp: timeNow,
-		},
-		{
-			ID:        uint64(20),
-			NodeID:    uint64(1),
-			Value:     25.0,
-			Type:      "Web",
-			Timestamp: timeNow,
-		},
+		test.MakeMeasurement(uint64(10), uint64(1), 20.0, "Web", timeNow),
+		test.MakeMeasurement(uint64(20), uint64(1), 25.0, "Web", timeNow),
 	}
 
 	tests := []struct {
@@ -112,7 +60,7 @@ func TestGetMeasurementsByNodeID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Having
-			measurementService := MeasurementServiceMock{}
+			measurementService := test.MeasurementServiceMock{}
 			handler := port.NewMeasurementHandler(&measurementService)
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost:8080/test", nil)
