@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS measurements (
 );
 
 
-INSERT INTO nodes (serial_number, description, model, date_created, last_updated) VALUES (UUID(),'Node 1', 'WEB', NOW(), NOW()), (UUID(),'Node 2', 'Type B', NOW(), NOW());
+INSERT INTO nodes (serial_number, description, model, date_created, last_updated) VALUES (UUID(),'Node 1', 'Model A', NOW(), NOW());
+INSERT INTO nodes (serial_number, description, model, date_created, last_updated) VALUES (UUID(),'Node 2', 'Model B', NOW(), NOW());
 
 INSERT INTO measurements (node_id, value, timestamp, type) VALUES (1, 10.5, '2024-06-14 12:30:45', 'humidity');
 INSERT INTO measurements (node_id, value, timestamp, type) VALUES (1, 15.3, '2024-06-14 12:35:21', 'temperature');
