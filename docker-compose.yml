@@ -81,13 +81,18 @@ services:
       - loki-data:/var/loki
       - ./loki/loki-config.yml:/etc/loki/loki-config.yml
     command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - logging
 
   promtail:
     image: grafana/promtail:2.8.2
     volumes:
       - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
       - /var/log:/var/log
+      - /var/lib/docker/containers:/var/lib/docker/containers
     command: -config.file=/etc/promtail/promtail-config.yml
+    networks:
+      - logging
 
   grafana:
     image: grafana/grafana:latest
@@ -97,8 +102,14 @@ services:
       - grafana-data:/var/lib/grafana
     environment:
       GF_SECURITY_ADMIN_PASSWORD: "admin"
+    networks:
+      - logging
 
 volumes:
   db-data:
   loki-data:
   grafana-data:
+
+networks:
+  logging:
+    driver: bridge
