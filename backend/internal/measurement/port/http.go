@@ -206,17 +206,10 @@ func (h *handler) AddMeasurementAP(w http.ResponseWriter, r *http.Request) {
 		allCreatedMeasurements = append(allCreatedMeasurements, createdMeasurements...)
 	}
 
-	// Convert created measurements to REST model
-	createdMeasurementRestModels := AppToNodeMeasurementsRestModel(allCreatedMeasurements)
-	// Respond with created measurements
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(createdMeasurementRestModels); err != nil {
-		log.Printf("[Handler] AddMeasurementAP - Error encoding response: %s", err.Error())
-		http.Error(w, "Error encoding response", http.StatusInternalServerError)
-		return
-	}
-	log.Printf("[Handler] AddMeasurementAP - Measurements added successfully")
+	log.Printf("[Handler] AddMeasurementAP - %d Measurements added successfully to AP %s", len(allCreatedMeasurements), serialNumber)
 
+	// Modify LastUpdated date for the AP node
 	err := h.measurementService.UpdateAPLastUpdated(ctx, serialNumber, nodesMeasurementsRest.LastUpdated)
 	if err != nil {
 		log.Printf("[Handler] AddMeasurementAP - Error updating last updated for node %s: %s", serialNumber, err.Error())
