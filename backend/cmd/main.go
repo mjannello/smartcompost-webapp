@@ -36,15 +36,14 @@ func main() {
 	}
 
 	// [from here] if we want to change the log file
-	//logFilePath := "/var/log/web/app.log"
-	//
-	//logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	//if err != nil {
-	//	log.Fatalf("Error abriendo el archivo de log: %v", err)
-	//}
-	//defer logFile.Close()
-	//
-	//log.SetOutput(logFile)
+	logFilePath := "/var/log/web/app.log"
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Error abriendo el archivo de log: %v", err)
+	}
+	defer logFile.Close()
+
+	log.SetOutput(logFile)
 	// to here
 	dbHost := cfg.Database.Host
 	dbPort := cfg.Database.Port

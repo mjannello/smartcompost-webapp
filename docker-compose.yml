@@ -1,12 +1,15 @@
 version: '3.8'
+
 services:
   nginx:
-    image: nginx:latest
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
       - "80:80"
     volumes:
       - ./nginx/smartcompost.conf:/etc/nginx/nginx.conf
-      - /var/log/nginx:/var/log/nginx
+      - ./logs/nginx:/var/log/nginx
     depends_on:
       - frontend
       - web
@@ -32,7 +35,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /var/log/web:/var/log/web
+      - ./logs/web:/var/log/web
     logging:
       driver: "json-file"
       options:
@@ -51,7 +54,7 @@ services:
     volumes:
       - db-data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - /var/log/mysql:/var/log/mysql
+      - ./logs/mysql:/var/log/mysql
     logging:
       driver: "json-file"
       options:
@@ -66,7 +69,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - /var/log/frontend:/var/log/frontend
+      - ./logs/frontend:/var/log/frontend
     logging:
       driver: "json-file"
       options:
@@ -88,7 +91,10 @@ services:
     image: grafana/promtail:2.8.2
     volumes:
       - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
-      - /var/log:/var/log
+      - ./logs/nginx:/var/log/nginx
+      - ./logs/web:/var/log/web
+      - ./logs/mysql:/var/log/mysql
+      - ./logs/frontend:/var/log/frontend
       - /var/lib/docker/containers:/var/lib/docker/containers
     command: -config.file=/etc/promtail/promtail-config.yml
     networks:
