@@ -35,16 +35,11 @@ func main() {
 		log.Fatalf("Error loading cfg: %v", err)
 	}
 
-	// [from here] if we want to change the log file
-	logFilePath := "/var/log/web/app.log"
-	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("Error abriendo el archivo de log: %v", err)
-	}
+	// [Setup logger] move logs into file_path to mount
+	logFile := setupLogger(err)
 	defer logFile.Close()
+	// [Setup logger]
 
-	log.SetOutput(logFile)
-	// to here
 	dbHost := cfg.Database.Host
 	dbPort := cfg.Database.Port
 	dbUser := cfg.Database.User
@@ -78,4 +73,14 @@ func main() {
 	if err := http.ListenAndServe(":8080", router); err != nil {
 		log.Fatalf("Could not start server: %v", err)
 	}
+}
+
+func setupLogger(err error) *os.File {
+	logFilePath := "/var/log/web/app.log"
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Error abriendo el archivo de log: %v", err)
+	}
+	log.SetOutput(logFile)
+	return logFile
 }
