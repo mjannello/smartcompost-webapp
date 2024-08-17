@@ -1,0 +1,394 @@
+definitions:
+  port.CreateNodeRequest:
+    properties:
+      description:
+        type: string
+      model:
+        type: string
+      serial_number:
+        type: string
+    type: object
+  port.MeasurementRestModel:
+    properties:
+      id:
+        type: integer
+      timestamp:
+        type: string
+      type:
+        type: string
+      value:
+        type: number
+    type: object
+  port.NodeMeasurementRestModel:
+    properties:
+      last_updated:
+        type: string
+      measurements:
+        items:
+          $ref: '#/definitions/port.MeasurementRestModel'
+        type: array
+      serial_number:
+        type: string
+    type: object
+  port.NodeRestModel:
+    properties:
+      date_created:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      last_updated:
+        type: string
+      measurements: {}
+      model:
+        type: string
+      serial_number:
+        type: string
+    type: object
+  port.NodesMeasurementsRestModel:
+    properties:
+      last_updated:
+        type: string
+      nodes_measurements:
+        items:
+          $ref: '#/definitions/port.NodeMeasurementRestModel'
+        type: array
+    type: object
+  port.PatchNodeModel:
+    properties:
+      description:
+        type: string
+      model:
+        type: string
+      serial_number:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/nodes:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all nodes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/port.NodeRestModel'
+            type: array
+        "500":
+          description: Error getting nodes
+          schema:
+            type: string
+      summary: Get all nodes
+      tags:
+      - nodes
+    post:
+      consumes:
+      - application/json
+      description: Create a new node with the provided information
+      parameters:
+      - description: Node data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/port.CreateNodeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/port.NodeRestModel'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "500":
+          description: Error creating node
+          schema:
+            type: string
+      summary: Create a new node
+      tags:
+      - nodes
+  /api/nodes/{nodeID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific node by its ID
+      parameters:
+      - description: Node ID
+        in: path
+        name: nodeID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid nodeID
+          schema:
+            type: string
+        "404":
+          description: Node not found
+          schema:
+            type: string
+        "500":
+          description: Error deleting node
+          schema:
+            type: string
+      summary: Delete a node by ID
+      tags:
+      - nodes
+    get:
+      consumes:
+      - application/json
+      description: Get a specific node by its ID
+      parameters:
+      - description: Node ID
+        in: path
+        name: nodeID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/port.NodeRestModel'
+        "400":
+          description: Invalid nodeID
+          schema:
+            type: string
+        "404":
+          description: Node not found
+          schema:
+            type: string
+        "500":
+          description: Error getting node
+          schema:
+            type: string
+      summary: Get a node by ID
+      tags:
+      - nodes
+    patch:
+      consumes:
+      - application/json
+      description: Update a node's information by its ID
+      parameters:
+      - description: Node ID
+        in: path
+        name: nodeID
+        required: true
+        type: integer
+      - description: Updated node data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/port.PatchNodeModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/port.NodeRestModel'
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "404":
+          description: Node not found
+          schema:
+            type: string
+        "500":
+          description: Error updating node
+          schema:
+            type: string
+      summary: Update an existing node
+      tags:
+      - nodes
+  /api/nodes/{nodeID}/measurements/{measurementID}:
+    patch:
+      consumes:
+      - application/json
+      description: Update a specific measurement by its ID and node ID
+      parameters:
+      - description: Node ID
+        in: path
+        name: nodeID
+        required: true
+        type: integer
+      - description: Measurement ID
+        in: path
+        name: measurementID
+        required: true
+        type: integer
+      - description: Measurement data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/port.MeasurementRestModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/port.MeasurementRestModel'
+        "400":
+          description: Invalid request body or parameters
+          schema:
+            type: string
+        "500":
+          description: Error updating measurement
+          schema:
+            type: string
+      summary: Update a measurement
+      tags:
+      - measurements
+  /api/nodes/{serialNumber}/measurements:
+    get:
+      consumes:
+      - application/json
+      description: Get all measurements for a specific node by its serial number
+      parameters:
+      - description: Node Serial Number
+        in: path
+        name: serialNumber
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/port.MeasurementRestModel'
+            type: array
+        "500":
+          description: Error getting measurements
+          schema:
+            type: string
+      summary: Get measurements by node serial number
+      tags:
+      - measurements
+    post:
+      consumes:
+      - application/json
+      description: Add one or more measurements to a specific node by its serial number
+      parameters:
+      - description: Node Serial Number
+        in: path
+        name: serialNumber
+        required: true
+        type: string
+      - description: Measurement data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/port.NodeMeasurementRestModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/port.MeasurementRestModel'
+            type: array
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "500":
+          description: Error adding measurements
+          schema:
+            type: string
+      summary: Add new measurements
+      tags:
+      - measurements
+  /api/nodes/{serialNumber}/measurements/{measurementID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific measurement by its ID and node serial number
+      parameters:
+      - description: Node Serial Number
+        in: path
+        name: serialNumber
+        required: true
+        type: string
+      - description: Measurement ID
+        in: path
+        name: measurementID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid measurementID
+          schema:
+            type: string
+        "404":
+          description: Measurement not found
+          schema:
+            type: string
+        "500":
+          description: Error deleting measurement
+          schema:
+            type: string
+      summary: Delete a measurement
+      tags:
+      - measurements
+  /api/nodes/{serialNumber}/measurements/ap:
+    post:
+      consumes:
+      - application/json
+      description: Add measurements to multiple nodes and update the last updated
+        date for each node
+      parameters:
+      - description: AP Serial Number
+        in: path
+        name: serialNumber
+        required: true
+        type: string
+      - description: Nodes Measurements data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/port.NodesMeasurementsRestModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Invalid request body
+          schema:
+            type: string
+        "500":
+          description: Error adding measurements
+          schema:
+            type: string
+      summary: Add measurements to multiple nodes
+      tags:
+      - measurements
+swagger: "2.0"

@@ -30,6 +30,16 @@ func NewMeasurementHandler(measurementService measurementapp.MeasurementService)
 	}
 }
 
+// GetMeasurementsByNode
+// @Summary Get measurements by node serial number
+// @Description Get all measurements for a specific node by its serial number
+// @Tags measurements
+// @Accept  json
+// @Produce  json
+// @Param serialNumber path string true "Node Serial Number"
+// @Success 200 {array} MeasurementRestModel
+// @Failure 500 {string} string "Error getting measurements"
+// @Router /api/nodes/{serialNumber}/measurements [get]
 func (h *handler) GetMeasurementsByNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	serialNumber := vars["serialNumber"]
@@ -59,6 +69,19 @@ func (h *handler) GetMeasurementsByNode(w http.ResponseWriter, r *http.Request) 
 	log.Printf("[Handler] GetMeasurementsByNode - Measurements fetched successfully for Node with Serial Number: %s", serialNumber)
 }
 
+// UpdateMeasurement
+// @Summary Update a measurement
+// @Description Update a specific measurement by its ID and node ID
+// @Tags measurements
+// @Accept  json
+// @Produce  json
+// @Param nodeID path int true "Node ID"
+// @Param measurementID path int true "Measurement ID"
+// @Param request body MeasurementRestModel true "Measurement data"
+// @Success 200 {object} MeasurementRestModel
+// @Failure 400 {string} string "Invalid request body or parameters"
+// @Failure 500 {string} string "Error updating measurement"
+// @Router /api/nodes/{nodeID}/measurements/{measurementID} [patch]
 func (h *handler) UpdateMeasurement(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeIDStr := vars["nodeID"]
@@ -98,6 +121,19 @@ func (h *handler) UpdateMeasurement(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler] UpdateMeasurement - Measurement updated successfully. ID: %d", updatedMeasurement.ID)
 }
 
+// DeleteMeasurement
+// @Summary Delete a measurement
+// @Description Delete a specific measurement by its ID and node serial number
+// @Tags measurements
+// @Accept  json
+// @Produce  json
+// @Param serialNumber path string true "Node Serial Number"
+// @Param measurementID path int true "Measurement ID"
+// @Success 204
+// @Failure 400 {string} string "Invalid measurementID"
+// @Failure 404 {string} string "Measurement not found"
+// @Failure 500 {string} string "Error deleting measurement"
+// @Router /api/nodes/{serialNumber}/measurements/{measurementID} [delete]
 func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	serialNumber := vars["serialNumber"]
@@ -129,6 +165,18 @@ func (h *handler) DeleteMeasurement(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler] DeleteMeasurement - Measurement deleted successfully. ID: %d", deletedID)
 }
 
+// AddMeasurement
+// @Summary Add new measurements
+// @Description Add one or more measurements to a specific node by its serial number
+// @Tags measurements
+// @Accept  json
+// @Produce  json
+// @Param serialNumber path string true "Node Serial Number"
+// @Param request body NodeMeasurementRestModel true "Measurement data"
+// @Success 201 {array} MeasurementRestModel
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 500 {string} string "Error adding measurements"
+// @Router /api/nodes/{serialNumber}/measurements [post]
 func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 	// Extract nodeID from URI params
 	vars := mux.Vars(r)
@@ -173,6 +221,18 @@ func (h *handler) AddMeasurement(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler] AddMeasurement - Measurements added successfully")
 }
 
+// AddMeasurementAP
+// @Summary Add measurements to multiple nodes
+// @Description Add measurements to multiple nodes and update the last updated date for each node
+// @Tags measurements
+// @Accept  json
+// @Produce  json
+// @Param serialNumber path string true "AP Serial Number"
+// @Param request body NodesMeasurementsRestModel true "Nodes Measurements data"
+// @Success 201
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 500 {string} string "Error adding measurements"
+// @Router /api/nodes/{serialNumber}/measurements/ap [post]
 func (h *handler) AddMeasurementAP(w http.ResponseWriter, r *http.Request) {
 	// Extract nodeID from URI params
 	vars := mux.Vars(r)
@@ -223,7 +283,6 @@ func AppToNodeMeasurementsRestModel(measurements []measurementmodel.Measurement)
 		createdMeasurementRestModels[i] = AppToRestNodeMeasurementModel(m)
 	}
 	return createdMeasurementRestModels
-
 }
 
 func AppToRestNodeMeasurementModel(measurement measurementmodel.Measurement) MeasurementRestModel {

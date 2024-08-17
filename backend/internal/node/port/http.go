@@ -36,6 +36,15 @@ type CreateNodeRequest struct {
 	Model        string `json:"model"`
 }
 
+// GetNodes
+// @Summary Get all nodes
+// @Description Get a list of all nodes
+// @Tags nodes
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} NodeRestModel
+// @Failure 500 {string} string "Error getting nodes"
+// @Router /api/nodes [get]
 func (h *handler) GetNodes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log.Printf("[Handler] GetNodes - Received request %s %s", r.Method, r.URL.Path)
@@ -64,6 +73,18 @@ func (h *handler) GetNodes(w http.ResponseWriter, r *http.Request) {
 	log.Println("[Handler] GetNodes - Nodes fetched successfully.")
 }
 
+// GetNodeByID
+// @Summary Get a node by ID
+// @Description Get a specific node by its ID
+// @Tags nodes
+// @Accept  json
+// @Produce  json
+// @Param nodeID path int true "Node ID"
+// @Success 200 {object} NodeRestModel
+// @Failure 400 {string} string "Invalid nodeID"
+// @Failure 404 {string} string "Node not found"
+// @Failure 500 {string} string "Error getting node"
+// @Router /api/nodes/{nodeID} [get]
 func (h *handler) GetNodeByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeIDStr := vars["nodeID"]
@@ -94,6 +115,17 @@ func (h *handler) GetNodeByID(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler] GetNode - Node fetched successfully. ID: %d", nodeID)
 }
 
+// CreateNode
+// @Summary Create a new node
+// @Description Create a new node with the provided information
+// @Tags nodes
+// @Accept  json
+// @Produce  json
+// @Param request body CreateNodeRequest true "Node data"
+// @Success 201 {object} NodeRestModel
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 500 {string} string "Error creating node"
+// @Router /api/nodes [post]
 func (h *handler) CreateNode(w http.ResponseWriter, r *http.Request) {
 	var createNodeReq CreateNodeRequest
 	if err := json.NewDecoder(r.Body).Decode(&createNodeReq); err != nil {
@@ -123,6 +155,19 @@ func (h *handler) CreateNode(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler] CreateNode - Node created successfully. ID: %d", node.ID)
 }
 
+// UpdateNode
+// @Summary Update an existing node
+// @Description Update a node's information by its ID
+// @Tags nodes
+// @Accept  json
+// @Produce  json
+// @Param nodeID path int true "Node ID"
+// @Param request body PatchNodeModel true "Updated node data"
+// @Success 200 {object} NodeRestModel
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 404 {string} string "Node not found"
+// @Failure 500 {string} string "Error updating node"
+// @Router /api/nodes/{nodeID} [patch]
 func (h *handler) UpdateNode(w http.ResponseWriter, r *http.Request) {
 	// TODO: Fix last_updated unmarshalling/format
 	vars := mux.Vars(r)
@@ -170,6 +215,18 @@ func (h *handler) UpdateNode(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[Handler] UpdateNode - Node updated successfully. ID: %d", updatedNode.ID)
 }
 
+// DeleteNode
+// @Summary Delete a node by ID
+// @Description Delete a specific node by its ID
+// @Tags nodes
+// @Accept  json
+// @Produce  json
+// @Param nodeID path int true "Node ID"
+// @Success 204
+// @Failure 400 {string} string "Invalid nodeID"
+// @Failure 404 {string} string "Node not found"
+// @Failure 500 {string} string "Error deleting node"
+// @Router /api/nodes/{nodeID} [delete]
 func (h *handler) DeleteNode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	nodeIDStr := vars["nodeID"]
@@ -217,7 +274,6 @@ func RestNodeModelToApp(nodeRestModel NodeRestModel) nodemodel.Node {
 		DateCreated:  nodeRestModel.DateCreated,
 		LastUpdated:  nodeRestModel.LastUpdated,
 	}
-
 }
 
 func AppToRestNodeModel(n nodemodel.Node) NodeRestModel {

@@ -2,8 +2,10 @@ package http
 
 import (
 	"github.com/gorilla/mux"
+	_ "github.com/mjannello/smartcompost-webapp/backend/docs"
 	measurementport "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/port"
 	nodeport "github.com/mjannello/smartcompost-webapp/backend/internal/node/port"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
 )
 
@@ -46,4 +48,7 @@ func (r *routerHandler) RouteURLs(router *mux.Router) {
 	accessPointPrefix := prefix + "/ap"
 	apMeasurementsPrefix := accessPointPrefix + measurementsSuffix
 	router.HandleFunc(apMeasurementsPrefix, r.measurementHandler.AddMeasurementAP).Methods(http.MethodPost)
+
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
 }
