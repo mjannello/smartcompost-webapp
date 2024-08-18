@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/gorilla/mux"
 	http2 "github.com/mjannello/smartcompost-webapp/backend/internal/http"
+	"github.com/mjannello/smartcompost-webapp/backend/internal/http/middleware"
 	measurementrepo "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/adapter/repository"
 	measurementapp "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/app"
 	measurementport "github.com/mjannello/smartcompost-webapp/backend/internal/measurement/port"
@@ -67,7 +68,7 @@ func main() {
 
 	router := mux.NewRouter()
 	routerHandler := http2.NewRouterHandler(nodeHandler, measurementHandler)
-	routerHandler.RouteURLs(router)
+	routerHandler.RouteURLs(router, middleware.CORS)
 
 	log.Println("Starting server on :8080...")
 	if err := http.ListenAndServe(":8080", router); err != nil {

@@ -10,7 +10,7 @@ import (
 )
 
 type RouterHandler interface {
-	RouteURLs(router *mux.Router)
+	RouteURLs(router *mux.Router, middlewareFunctions mux.MiddlewareFunc)
 }
 
 func NewRouterHandler(nodeHandler nodeport.Handler, measurementHandler measurementport.Handler) RouterHandler {
@@ -25,7 +25,7 @@ type routerHandler struct {
 	measurementHandler measurementport.Handler
 }
 
-func (r *routerHandler) RouteURLs(router *mux.Router) {
+func (r *routerHandler) RouteURLs(router *mux.Router, middlewareFunctions mux.MiddlewareFunc) {
 	prefix := "/api"
 	nodesPrefix := prefix + "/nodes"
 
@@ -50,5 +50,7 @@ func (r *routerHandler) RouteURLs(router *mux.Router) {
 	router.HandleFunc(apMeasurementsPrefix, r.measurementHandler.AddMeasurementAP).Methods(http.MethodPost)
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	router.Use(middlewareFunctions)
 
 }
